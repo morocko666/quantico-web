@@ -9,9 +9,9 @@ const socials = config?.footerSocials || [];
 const lang = Astro.params.lang || 'es';
 const isEnglish = lang === 'en';
 
-// 2. Rutas para los botones de idiomas (SP | EN)
+// 2. Rutas para los botones de idiomas (ES | EN)
 const currentPath = Astro.url.pathname;
-// Reemplazamos el idioma en la URL para que el botón SP/EN nos deje en la misma página
+// Reemplazamos el idioma en la URL para que el botón ES/EN nos deje en la misma página
 const pathEs = currentPath.replace(/^\/(en|es)/, '/es') || '/es/';
 const pathEn = currentPath.replace(/^\/(en|es)/, '/en') || '/en/';
 
@@ -41,7 +41,7 @@ const urlContacto = `/${lang}${config?.urlContacto || '/contacto'}`;
 <div id="menu-overlay" class="menu-overlay">
   <div class="overlay-header">
     <div class="lang-switch sys-label">
-      <a href={pathEs} class={!isEnglish ? "active" : ""}>SP</a>
+      <a href={pathEs} class={!isEnglish ? "active" : ""}>ES</a>
       <span class="separator">|</span>
       <a href={pathEn} class={isEnglish ? "active" : ""}>EN</a>
     </div>

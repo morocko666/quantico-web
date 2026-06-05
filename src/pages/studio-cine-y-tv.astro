@@ -6,41 +6,52 @@ import Layout from '../layouts/Layout.astro';
 <Layout>
   <section class="studio-container">
     
-    <!-- 1. Cabecera de la sección -->
     <header class="studio-header">
       <h1 class="sys-h1">Studio</h1>
       
       <nav class="category-filters">
         <a href="/studio-cine-y-tv" class="filter-btn active">CINE Y TV</a>
         <a href="#" class="filter-btn">VERTICALES</a>
-        <a href="#" class="filter-btn">INTELIGENCIA ARTIFICIAL</a>
+        <a href="#" class="filter-btn">IA</a>
       </nav>
     </header>
 
-    <!-- 2. Descripción de la división -->
     <div class="division-info">
       <h2 class="sys-h2">Cine y Tv</h2>
       <p class="sys-label accent-text">Historias que trascienden pantallas.</p>
       <div class="description sys-body">
-        <p>Nuestra división de Cine y TV desarrolla y produce proyectos guionizados y no guionizados con ambición internacional...</p>
+        <p>Nuestra división de Cine y TV desarrolla y produce proyectos guionizados y no guionizados con ambición internacional.</p>
+        <br>
+        <p>Trabajamos largometrajes, series y formatos documentales con una visión clara: crear propiedad intelectual sólida, exportable y culturalmente relevante.</p>
+        <br>
+        <p>Creemos en el poder de los grandes personajes, en el valor de un buen guion y en la construcción de universos narrativos que conecten con audiencias globales.</p>
+        <br>
+        <p>Desarrollamos proyectos desde su concepción hasta su producción y estrategia de distribución.</p>
       </div>
     </div>
 
-    <!-- 3. Grid de Proyectos (Maqueta temporal) -->
+    <nav class="category-filters secondary-filters">
+      <a href="#" class="filter-btn-outline active">DESARROLLO</a>
+      <a href="#" class="filter-btn-outline">PRODUCCIÓN</a>
+      <a href="#" class="filter-btn-outline">DISTRIBUCIÓN</a>
+    </nav>
+
     <div class="projects-grid">
-      <!-- Esta tarjeta luego la llenaremos con datos de Sanity -->
       <article class="project-card">
+        
+        <div class="card-image">
+           <img src="/placeholder-poster.jpg" alt="Poster" />
+        </div>
+        
         <div class="card-content">
           <h3 class="sys-h3">Título</h3>
-          <p class="sys-body">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce eleifend sed tellus et interdum.</p>
+          <p class="sys-body">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce eleifend sed tellus et interdum. Aliquam erat volutpat. In non maximus risus, et faucibus nisl.</p>
           <div class="card-footer">
             <span class="sys-body">Co-produccion: 3Pas (Mexico) & Quantico Films (Peru)</span>
             <span class="sys-body">Escrito por: Franco Iza</span>
           </div>
         </div>
-        <div class="card-image">
-           <img src="/placeholder-poster.jpg" alt="Poster" />
-        </div>
+
       </article>
     </div>
 
@@ -52,6 +63,7 @@ import Layout from '../layouts/Layout.astro';
     padding: 160px 4rem 8rem 4rem;
     max-width: 1600px;
     margin: 0 auto;
+    color: white; 
   }
 
   .studio-header {
@@ -62,41 +74,73 @@ import Layout from '../layouts/Layout.astro';
     display: flex;
     gap: 1rem;
     margin-top: 2rem;
+    flex-wrap: wrap; 
   }
 
   .filter-btn {
-    padding: 0.8rem 1.5rem;
-    border-radius: 4px;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
     text-decoration: none;
-    font-family: var(--font-primary);
     font-weight: 700;
-    font-size: 0.8rem;
-    background: var(--text);
-    color: var(--bg-main);
+    font-size: 0.9rem;
     transition: all 0.3s ease;
+    background-color: white; 
+    color: #d86a38; 
+    text-transform: uppercase;
+    letter-spacing: 1px;
   }
 
   .filter-btn.active {
-    background: var(--accent);
-    color: var(--text);
+    background-color: #d86a38; 
+    color: white; 
+  }
+
+  .secondary-filters {
+    margin-bottom: 3rem;
+  }
+
+  .filter-btn-outline {
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+    border: 1px solid #d86a38;
+    background-color: transparent;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .filter-btn-outline.active {
+    background-color: transparent;
+    color: #d86a38;
   }
 
   .division-info {
     max-width: 800px;
-    margin-bottom: 6rem;
+    margin-bottom: 4rem;
   }
 
   .accent-text {
-    color: var(--accent);
+    color: #d86a38;
     margin: 1.5rem 0;
+    font-size: 1.5rem;
+    font-weight: 700;
   }
 
   .description {
-    opacity: 0.8;
+    opacity: 0.9;
     line-height: 1.6;
+    font-size: 1.1rem;
+  }
+  
+  .description p {
+    margin: 0;
   }
 
-  /* Estilos para las Cards según tu diseño cinemático */
+  /* --- ESTILOS PARA LAS CARDS --- */
   .projects-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
@@ -104,18 +148,73 @@ import Layout from '../layouts/Layout.astro';
   }
 
   .project-card {
-    background: rgba(255, 255, 255, 0.05);
+    background-color: #0b808f; 
     border-radius: 12px;
     padding: 2rem;
     display: flex;
     gap: 2rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    /* En PC invertimos la fila: la imagen (que es el div 1) se va a la derecha */
+    flex-direction: row-reverse; 
+  }
+
+  .card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+  }
+
+  .card-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: auto;
+  }
+
+  .card-image {
+    flex-shrink: 0;
   }
 
   .card-image img {
-    width: 150px;
+    width: 250px;
     height: auto;
-    border-radius: 4px;
+    border-radius: 8px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    display: block;
+  }
+
+  /* =========================================
+     OPTIMIZACIÓN PARA MOBILE
+     ========================================= */
+  @media (max-width: 768px) {
+    .studio-container {
+      padding: 120px 24px 4rem 24px; 
+    }
+
+    .projects-grid {
+      grid-template-columns: 1fr; 
+    }
+
+    .project-card {
+      /* En celular lo ponemos como columna normal. Como la imagen es el div 1, queda arriba */
+      flex-direction: column; 
+      padding: 0; 
+      overflow: hidden; 
+    }
+
+    .card-image {
+      width: 100%;
+    }
+
+    .card-image img {
+      width: 100%; 
+      height: auto;
+      border-radius: 12px 12px 0 0; 
+      box-shadow: none; 
+    }
+
+    .card-content {
+      padding: 2rem; 
+    }
   }
 </style>

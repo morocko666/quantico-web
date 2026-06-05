@@ -25,6 +25,7 @@ const copyright = config?.footerCopyright?.es || 'QUANTICO 2026 © Todos los der
 </footer>
 
 <style>
+  /* --- ESTILOS DE ESCRITORIO --- */
   .site-footer {
     display: flex;
     justify-content: space-between;
@@ -48,5 +49,28 @@ const copyright = config?.footerCopyright?.es || 'QUANTICO 2026 © Todos los der
 
   .footer-socials a:hover {
     opacity: 0.7;
+  }
+
+  /* --- ESTILOS MÓVILES --- */
+  @media (max-width: 768px) {
+    .site-footer {
+      flex-direction: column; /* Apila los elementos verticalmente */
+      justify-content: center;
+      gap: 2.5rem; /* Espacio entre las redes y el copyright */
+      padding: 3rem 2rem;
+    }
+
+    .footer-socials {
+      order: 1; /* Mueve las redes sociales arriba */
+      justify-content: center;
+      width: 100%;
+      gap: 1.5rem; /* Reduce un poco el espacio entre palabras en celular */
+    }
+
+    .footer-copy {
+      order: 2; /* Mueve el copyright abajo */
+      width: 100%;
+      text-align: center; /* Centra el texto */
+    }
   }
 </style>

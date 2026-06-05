@@ -44,7 +44,7 @@ const { projects } = Astro.props;
 </div>
 
 <style>
-  /* --- ESTILOS DE LA GRILLA --- */
+/* --- ESTILOS DE LA GRILLA (ESCRITORIO) --- */
   .project-grid {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
@@ -53,7 +53,8 @@ const { projects } = Astro.props;
 
   .project-card {
     border-radius: 12px; overflow: hidden; position: relative;
-    text-decoration: none; color: white; aspect-ratio: 16 / 9; 
+    text-decoration: none; color: white; 
+    aspect-ratio: 16 / 9; /* Formato cine horizontal por defecto en escritorio */
     display: block; background-color: #111; cursor: pointer;
   }
 
@@ -81,10 +82,9 @@ const { projects } = Astro.props;
   .director-name { font-size: 0.85rem; margin: 0; opacity: 0.9; }
 
   /* --- ESTILOS DEL MODAL --- */
-  /* --- ESTILOS DEL MODAL --- */
   .grid-modal {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    background-color: rgba(0, 0, 0, 0.95); /* Fondo oscuro con leve transparencia */
+    background-color: rgba(0, 0, 0, 0.95);
     z-index: 99999;
     display: flex; align-items: center; justify-content: center;
     opacity: 1; visibility: visible;
@@ -110,7 +110,6 @@ const { projects } = Astro.props;
   .modal-video-wrapper {
     width: 90vw; 
     max-width: 1400px;
-    /* Esto obliga al video a no chocar nunca con los bordes superior/inferior */
     max-height: 85vh; 
     aspect-ratio: 16 / 9;
     position: relative;
@@ -120,26 +119,46 @@ const { projects } = Astro.props;
     width: 100%; height: 100%; position: absolute; top: 0; left: 0;
   }
 
-  /* --- MOBILE --- */
+  /* --- MOBILE (SLIDER HORIZONTAL) --- */
   @media (max-width: 768px) {
-    .project-grid { grid-template-columns: 1fr; gap: 1.2rem; }
-    .pattern-0, .pattern-1, .pattern-2, .pattern-3, .pattern-4 { grid-column: span 1; }
+    .project-grid { 
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none; 
+      
+      margin-left: -24px;
+      margin-right: -24px;
+      padding-left: 24px;
+      padding-right: 24px;
+      padding-bottom: 2rem;
+      gap: 1rem;
+    }
+
+    .project-grid::-webkit-scrollbar {
+      display: none; 
+    }
+
+    .project-card {
+      flex: 0 0 85vw;
+      scroll-snap-align: center;
+      
+      /* --- LA MAGIA ESTÁ AQUÍ --- */
+      /* Cambiamos la proporción a 4:5 para hacerlas semi-cuadradas y más altas */
+      aspect-ratio: 4 / 5; 
+    }
+
+    .pattern-0, .pattern-1, .pattern-2, .pattern-3, .pattern-4 { 
+      grid-column: auto; 
+    }
+    
     .client-name { font-size: 1.2rem; }
     
     .close-modal { top: 1.5rem; right: 1.5rem; }
     .close-modal svg { width: 24px; height: 24px; }
-    /* En celulares sí permitimos que tome el 100% del ancho para aprovechar la pantalla */
     .modal-video-wrapper { width: 100vw; max-height: none; } 
-  }
-
-  /* --- MOBILE --- */
-  @media (max-width: 768px) {
-    .project-grid { grid-template-columns: 1fr; gap: 1.2rem; }
-    .pattern-0, .pattern-1, .pattern-2, .pattern-3, .pattern-4 { grid-column: span 1; }
-    .client-name { font-size: 1.2rem; }
-    
-    .close-modal { top: 1.5rem; right: 1.5rem; }
-    .modal-video-wrapper { max-width: 100vw; }
   }
 </style>
 
