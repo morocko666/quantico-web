@@ -1,0 +1,213 @@
+---
+// src/pages/[lang]/studio/verticales.astro
+import Layout from '../../../layouts/Layout.astro';
+import Header from '../../../components/Header.astro';
+import MenuOverlay from '../../../components/MenuOverlay.astro';
+import { sanityClient } from '../../../lib/sanity';
+
+export function getStaticPaths() {
+  return [
+    { params: { lang: 'es' } },
+    { params: { lang: 'en' } },
+  ];
+}
+
+const { lang } = Astro.params;
+
+const query = `*[_type == "pageStudioVerticales"][0]{
+  pageTitle,
+  mainTitle,
+  subtitle,
+  paragraph,
+  projectsCards[]{ 
+    title,
+    "instagramUrl": link,
+    "imageUrl": image.asset->url 
+  }
+}`;
+
+const pageData = await sanityClient.fetch(query);
+
+const getText = (field) => {
+  if (!field) return '';
+  if (typeof field === 'string') return field;
+  if (lang === 'en' && field.en) return field.en;
+  if (field.es) return field.es;
+  return '';
+};
+
+const tabCine = lang === 'en' ? 'FILM & TV' : 'CINE Y TV';
+const tabVerticales = lang === 'en' ? 'VERTICALS' : 'VERTICALES';
+const tabIA = lang === 'en' ? 'ARTIFICIAL INTELLIGENCE' : 'INTELIGENCIA ARTIFICIAL';
+
+const title = getText(pageData?.pageTitle) || 'Studio';
+const mainTitle = getText(pageData?.mainTitle) || 'Verticales';
+const subtitle = getText(pageData?.subtitle) || 'Narrativas diseñadas para el nuevo consumo.';
+const mainParagraph = getText(pageData?.paragraph) || 'Desarrollamos y producimos microdramas y series en formato vertical pensadas para audiencias mobile-first.\n\nEntendemos que las nuevas generaciones consumen historias en minutos, con ritmos intensos y estructuras adictivas. Por eso creamos contenidos optimizados para plataformas digitales, combinando lenguaje cinematográfico con agilidad narrativa.\n\nLos verticales no son una adaptación del cine o la TV. Son un nuevo lenguaje.';
+
+const cards = pageData?.projectsCards?.length > 0 ? pageData.projectsCards : [
+  { title: 'La familia Chueca', instagramUrl: 'https://instagram.com/quanticofilms', imageUrl: 'https://images.unsplash.com/photo-1573868388484-9dbb599f66bb?q=80&w=600&auto=format&fit=crop' },
+  { title: 'Xiaomi', instagramUrl: 'https://instagram.com/quanticofilms', imageUrl: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=600&auto=format&fit=crop' },
+  { title: 'Cemento Sol', instagramUrl: 'https://instagram.com/quanticofilms', imageUrl: 'https://images.unsplash.com/photo-1543807535-eceef0bc6599?q=80&w=600&auto=format&fit=crop' },
+  { title: 'Sandía Project', instagramUrl: 'https://instagram.com/quanticofilms', imageUrl: 'https://images.unsplash.com/photo-1536240212046-5b204ce4999a?q=80&w=600&auto=format&fit=crop' }
+];
+---
+
+<Layout>
+  <Header />
+  <MenuOverlay />
+
+  <main class="page-studio">
+    <div class="content-wrapper">
+      
+      <h1 class="page-title">{title}</h1>
+      <div class="primary-filters">
+        <a href={`/${lang}/studio/cine-y-tv`} class="filter-btn">{tabCine}</a>
+        <a href={`/${lang}/studio/verticales`} class="filter-btn active">{tabVerticales}</a>
+        <a href={`/${lang}/studio/ia`} class="filter-btn">{tabIA}</a>
+      </div>
+
+      <div class="intro-section">
+        <h2 class="section-subtitle">{mainTitle}</h2>
+        {subtitle && <p class="highlight-text">{subtitle}</p>}
+        <div class="paragraphs">
+          <p class="main-desc">{mainParagraph}</p>
+        </div>
+      </div>
+
+      <div class="vertical-grid">
+        {cards.map((card) => (
+          <a 
+            href={card.instagramUrl || '#'} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            class="vertical-card" 
+            style={`background-image: url('${card.imageUrl || ''}');`}
+          >
+            <div class="card-overlay">
+              <h3 class="card-title">{getText(card.title)}</h3>
+            </div>
+          </a>
+        ))}
+      </div>
+
+    </div>
+  </main>
+</Layout>
+
+<style>
+  :root {
+    --bg-dark: #112d34;
+    --accent: #d86a38;
+    --text-light: #7da5af;
+  }
+
+  body { background-color: var(--bg-dark); }
+
+  .page-studio {
+    min-height: 100vh; width: 100%;
+    padding-top: 10rem; padding-bottom: 6rem;
+    color: white; overflow-x: hidden;
+  }
+
+  .content-wrapper {
+    width: 100%; padding: 0 4rem; box-sizing: border-box;
+  }
+
+  .page-title {
+    font-size: 5rem; font-weight: 700; margin: 0 0 2rem 0; letter-spacing: -1px;
+  }
+
+  .primary-filters { display: flex; gap: 1rem; margin-bottom: 4rem; flex-wrap: wrap; }
+  .filter-btn {
+    padding: 0.6rem 1.2rem; border-radius: 4px; font-weight: 700;
+    font-size: 0.85rem; text-decoration: none; transition: all 0.3s ease;
+  }
+  .filter-btn.active { background-color: var(--accent); color: white; }
+  .filter-btn:not(.active) { background-color: white; color: var(--accent); }
+  .filter-btn:not(.active):hover { opacity: 0.8; }
+
+  .intro-section { max-width: 1000px; margin-bottom: 4rem; }
+  .section-subtitle { font-size: 2.5rem; font-weight: 400; margin: 0 0 1.5rem 0; }
+  .highlight-text { color: var(--text-light); font-weight: 700; margin-bottom: 1.5rem; font-size: 1.1rem; }
+  .main-desc { color: var(--text-light); font-size: 1rem; line-height: 1.6; white-space: pre-wrap; }
+
+  /* --- GRILLA DE VERTICALES --- */
+  .vertical-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    width: 100%;
+  }
+
+  .vertical-card {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    aspect-ratio: 9 / 16; 
+    background-size: cover;
+    background-position: center;
+    background-color: #1a3d46;
+    transition: transform 0.4s ease;
+    cursor: pointer;
+    text-decoration: none;
+    display: block;
+  }
+
+  .vertical-card:hover {
+    transform: translateY(-10px);
+  }
+
+  .card-overlay {
+    position: absolute;
+    bottom: 0; 
+    left: 0; 
+    width: 100%;
+    height: 100%; /* Ocupa toda la tarjeta para empujar el texto */
+    padding: 32px; /* Margen exacto de 32px a los lados y abajo */
+    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 50%);
+    display: flex;
+    justify-content: flex-start; /* Fuerza alineación izquierda */
+    align-items: flex-end; /* Fuerza alineación abajo */
+    box-sizing: border-box;
+  }
+
+  .card-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin: 0;
+    color: white;
+    line-height: 1.1;
+    text-align: left;
+  }
+
+  /* Importante: Borra cualquier estilo de .mute-icon que tengas abajo de esto */
+
+  @media (max-width: 1024px) {
+    .vertical-grid {
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      padding-bottom: 2rem;
+      scrollbar-width: none; 
+    }
+    .vertical-grid::-webkit-scrollbar { display: none; }
+    
+    .vertical-card {
+      flex: 0 0 45vw; 
+      scroll-snap-align: center;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .content-wrapper { padding: 0 24px; }
+    .page-title { font-size: 3.5rem; }
+    
+    .vertical-card {
+      flex: 0 0 75vw; 
+    }
+    
+    /* En móvil bajamos un poco el margen para que no quite tanto espacio */
+    .card-overlay { padding: 3rem 24px 24px 24px; }
+  }
+</style>

@@ -1,0 +1,121 @@
+---
+// src/pages/studio-cine-y-tv.astro
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout>
+  <section class="studio-container">
+    
+    <!-- 1. Cabecera de la sección -->
+    <header class="studio-header">
+      <h1 class="sys-h1">Studio</h1>
+      
+      <nav class="category-filters">
+        <a href="/studio-cine-y-tv" class="filter-btn active">CINE Y TV</a>
+        <a href="#" class="filter-btn">VERTICALES</a>
+        <a href="#" class="filter-btn">INTELIGENCIA ARTIFICIAL</a>
+      </nav>
+    </header>
+
+    <!-- 2. Descripción de la división -->
+    <div class="division-info">
+      <h2 class="sys-h2">Cine y Tv</h2>
+      <p class="sys-label accent-text">Historias que trascienden pantallas.</p>
+      <div class="description sys-body">
+        <p>Nuestra división de Cine y TV desarrolla y produce proyectos guionizados y no guionizados con ambición internacional...</p>
+      </div>
+    </div>
+
+    <!-- 3. Grid de Proyectos (Maqueta temporal) -->
+    <div class="projects-grid">
+      <!-- Esta tarjeta luego la llenaremos con datos de Sanity -->
+      <article class="project-card">
+        <div class="card-content">
+          <h3 class="sys-h3">Título</h3>
+          <p class="sys-body">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce eleifend sed tellus et interdum.</p>
+          <div class="card-footer">
+            <span class="sys-body">Co-produccion: 3Pas (Mexico) & Quantico Films (Peru)</span>
+            <span class="sys-body">Escrito por: Franco Iza</span>
+          </div>
+        </div>
+        <div class="card-image">
+           <img src="/placeholder-poster.jpg" alt="Poster" />
+        </div>
+      </article>
+    </div>
+
+  </section>
+</Layout>
+
+<style>
+  .studio-container {
+    padding: 160px 4rem 8rem 4rem;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  .studio-header {
+    margin-bottom: 4rem;
+  }
+
+  .category-filters {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .filter-btn {
+    padding: 0.8rem 1.5rem;
+    border-radius: 4px;
+    text-decoration: none;
+    font-family: var(--font-primary);
+    font-weight: 700;
+    font-size: 0.8rem;
+    background: var(--text);
+    color: var(--bg-main);
+    transition: all 0.3s ease;
+  }
+
+  .filter-btn.active {
+    background: var(--accent);
+    color: var(--text);
+  }
+
+  .division-info {
+    max-width: 800px;
+    margin-bottom: 6rem;
+  }
+
+  .accent-text {
+    color: var(--accent);
+    margin: 1.5rem 0;
+  }
+
+  .description {
+    opacity: 0.8;
+    line-height: 1.6;
+  }
+
+  /* Estilos para las Cards según tu diseño cinemático */
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+    gap: 2rem;
+  }
+
+  .project-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 2rem;
+    display: flex;
+    gap: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .card-image img {
+    width: 150px;
+    height: auto;
+    border-radius: 4px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+</style>

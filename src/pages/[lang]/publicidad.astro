@@ -1,0 +1,143 @@
+---
+// src/pages/[lang]/publicidad.astro
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import MenuOverlay from '../../components/MenuOverlay.astro';
+import ProjectGrid from '../../components/ProjectGrid.astro';
+import { sanityClient } from '../../lib/sanity';
+
+export function getStaticPaths() {
+  return [
+    { params: { lang: 'es' } },
+    { params: { lang: 'en' } },
+  ];
+}
+
+const { lang } = Astro.params;
+// Etiquetas traducibles para el submenú
+const labelProyectos = lang === 'en' ? 'PROJECTS' : 'PROYECTOS';
+const labelDirectores = lang === 'en' ? 'DIRECTORS' : 'DIRECTORES';
+
+const rawVideos = await sanityClient.fetch(`*[_type == "project"]{ ... }`);
+
+const getText = (field) => {
+  if (!field) return '';
+  if (typeof field === 'string') return field;
+  if (lang === 'en') {
+    if (field.en) return field.en;
+    if (field.title && field.title.en) return field.title.en;
+    if (field.name && field.name.en) return field.name.en;
+    if (field.title && typeof field.title === 'string') return field.title;
+    if (field.name && typeof field.name === 'string') return field.name;
+  }
+  if (field.es) return field.es;
+  if (field.title && field.title.es) return field.title.es;
+  if (field.title && typeof field.title === 'string') return field.title;
+  if (field.name && field.name.es) return field.name.es;
+  if (field.name && typeof field.name === 'string') return field.name;
+  return '';
+};
+
+const projects = rawVideos.map((video) => ({
+  title: getText(video.title) || 'Sin título',
+  category: getText(video.client), 
+  director: getText(video.director),
+  vimeoId: video.vimeoId || ''
+}));
+---
+
+<Layout>
+  <Header />
+  <MenuOverlay />
+  
+  <main class="page-publicidad">
+    <div class="content-wrapper">
+      
+      <h1 class="page-title">Publicidad</h1>
+      
+      <div class="filters">
+        <a href={`/${lang}/publicidad`} class="filter-btn active">{labelProyectos}</a>
+        <a href={`/${lang}/directores`} class="filter-btn">{labelDirectores}</a>
+      </div>
+
+      <ProjectGrid projects={projects} />
+      
+    </div>
+  </main>
+</Layout>
+
+<style>
+  /* Base de la página completa */
+  .page-publicidad {
+    background-color: #1a3d46; /* El tono verde petróleo de tu diseño */
+    min-height: 100vh;
+    width: 100%;
+    padding-top: 10rem; /* Espacio para que respire por debajo del Header */
+    padding-bottom: 6rem;
+  }
+
+  .content-wrapper {
+    /* Eliminamos el max-width y el margin auto */
+    width: 100%;
+    padding: 0 4rem;
+    box-sizing: border-box;
+  }
+
+  .page-title {
+    font-size: 5rem;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 2rem 0;
+  }
+
+  /* Botones de filtros */
+  .filters {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 3.5rem;
+  }
+
+  .filter-btn {
+    padding: 0.6rem 1.2rem;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-decoration: none;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+  }
+
+  /* Estado Activo (Naranja) */
+  .filter-btn.active {
+    background-color: #d86a38; 
+    color: white;
+  }
+
+  /* Estado Inactivo (Blanco) */
+  .filter-btn:not(.active) {
+    background-color: white;
+    color: #d86a38;
+  }
+  
+  /* Efecto Hover para el botón inactivo */
+  .filter-btn:not(.active):hover {
+    background-color: #f0f0f0;
+  }
+
+  /* =========================================
+     OPTIMIZACIÓN PARA MOBILE
+     ========================================= */
+  @media (max-width: 768px) {
+    .page-publicidad { 
+      padding-top: 8rem; 
+    }
+    
+    .content-wrapper { 
+      padding: 0 24px; /* Empatamos con el Header */
+    }
+    
+    .page-title { 
+      font-size: 3.5rem; 
+    }
+  }
+</style>

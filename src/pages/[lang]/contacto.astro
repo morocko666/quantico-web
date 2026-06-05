@@ -1,0 +1,318 @@
+---
+// src/pages/[lang]/contacto.astro
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import MenuOverlay from '../../components/MenuOverlay.astro';
+import { sanityClient } from '../../lib/sanity';
+
+export function getStaticPaths() {
+  return [
+    { params: { lang: 'es' } },
+    { params: { lang: 'en' } },
+  ];
+}
+
+const { lang } = Astro.params;
+
+// 1. Consulta GROQ exacta según tu esquema
+const query = `*[_type == "pageContacto"][0]{
+  pageTitle,
+  "mainImageUrl": mainImage.asset->url,
+  "mapImageUrl": mapImage.asset->url, // <-- ¡Agregamos esta línea!
+  vimeoId,
+  contactList[]{
+    name,
+    role,
+    email
+  },
+  socials[]{
+    title,
+    networkName,
+    link
+  }
+}`;
+
+const pageData = await sanityClient.fetch(query).catch(() => null);
+
+const getText = (field) => {
+  if (!field) return '';
+  if (typeof field === 'string') return field;
+  if (lang === 'en' && field.en) return field.en;
+  if (field.es) return field.es;
+  return '';
+};
+
+// 2. Extracción de variables (con Mocks para diseño inmediato)
+const title = getText(pageData?.pageTitle) || 'Contacto';
+const vimeoId = pageData?.vimeoId || '824804225'; // ID temporal para que veas el efecto
+const mainImageUrl = pageData?.mainImageUrl || 'https://images.unsplash.com/photo-1605806616949-1e87b487cb2a?q=80&w=800&auto=format&fit=crop'; // Fallback por si el video falla
+
+const contacts = pageData?.contactList?.length > 0 ? pageData.contactList : [
+  { name: 'Juan Pablo Ortiz', role: 'Fundador y Productor Ejecutivo Global', email: 'JP.ORTIZ@SHOOTQUANTICO.COM' },
+  { name: 'Talia Garcia-Corrochano', role: 'Productora Ejecutiva Publicidad', email: 'TALIA@SHOOTQUANTICO.COM' },
+  { name: 'Paula De la Rosa', role: 'Coordinadora de Desarrollo', email: 'PAULA@SHOOTQUANTICO.COM' }
+];
+
+const socials = pageData?.socials?.length > 0 ? pageData.socials : [
+  { title: 'SÍGUENOS EN', networkName: 'LINKEDIN', link: '#' },
+  { title: '', networkName: 'INSTAGRAM', link: '#' },
+  { title: '', networkName: 'VIMEO', link: '#' }
+];
+---
+
+<Layout>
+  <Header />
+  <MenuOverlay />
+
+  <main class="page-contacto">
+    <div class="split-layout">
+      
+      <div class="media-pane">
+        {vimeoId ? (
+          <div class="video-background">
+            <iframe 
+              src={`https://player.vimeo.com/video/${vimeoId}?background=1&autoplay=1&loop=1&byline=0&title=0`} 
+              frameborder="0" 
+              allow="autoplay; fullscreen" 
+              loading="lazy">
+            </iframe>
+          </div>
+        ) : (
+          <div class="image-background" style={`background-image: url('${mainImageUrl}');`}></div>
+        )}
+        <div class="media-overlay"></div>
+      </div>
+
+      <div class="content-pane">
+        <h1 class="page-title">{title}</h1>
+
+        <div class="content-grid">
+          
+          <div class="contact-list">
+            {contacts.map(contact => (
+              <div class="contact-item">
+                <h2 class="contact-name">{contact.name}</h2>
+                <p class="contact-role">{getText(contact.role)}</p>
+                {contact.email && (
+                  <a href={`mailto:${contact.email}`} class="contact-email">{contact.email.toUpperCase()}</a>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div class="map-container">
+            <img src="https://via.placeholder.com/500x500/112d34/ffffff?text=Exportar+Mapa+de+Figma" alt="Mapa Quantico" class="map-illustration" />
+          </div>
+
+        </div>
+
+        <div class="socials-footer">
+          {socials.map((social, index) => (
+            <div class="social-item">
+              {getText(social.title) && <span class="social-label">{getText(social.title)}</span>}
+              <a href={social.link} target="_blank" rel="noopener noreferrer" class="social-link">
+                {social.networkName.toUpperCase()}
+              </a>
+            </div>
+          ))}
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+</Layout>
+
+<style>
+  :root {
+    --bg-dark: #112d34;
+    --accent: #d86a38;
+    --text-light: #7da5af;
+  }
+
+  body { margin: 0; background-color: var(--bg-dark); }
+
+  /* Contenedor maestro 100vh para que no haya scroll en desktop */
+  .page-contacto {
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .split-layout {
+    display: flex;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* --- LADO IZQUIERDO (VIDEO) --- */
+  .media-pane {
+    width: 38%; /* Proporción visual basada en tu diseño */
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    background-color: #000;
+  }
+
+  /* Capa para oscurecer levemente el video si es necesario */
+  .media-overlay {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.2);
+    pointer-events: none;
+  }
+
+  .image-background {
+    width: 100%; height: 100%;
+    background-size: cover; background-position: center;
+  }
+
+  /* Truco CSS para que el iframe actúe como object-fit: cover */
+  .video-background {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; overflow: hidden;
+  }
+
+  .video-background iframe {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100vw; height: 56.25vw; /* Ratio 16:9 */
+    min-height: 100vh; min-width: 177.77vh; /* Ratio 16:9 */
+  }
+
+  /* --- LADO DERECHO (CONTENIDO) --- */
+  .content-pane {
+    width: 62%;
+    height: 100%;
+    background-color: var(--bg-dark);
+    color: white;
+    padding: 10rem 4rem 4rem 6rem;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    overflow-y: auto; /* Permite scroll solo de este lado si la pantalla es muy bajita */
+  }
+
+  .page-title {
+    font-size: 6rem;
+    font-weight: 700;
+    margin: 0 0 4rem 0;
+    letter-spacing: -1px;
+  }
+
+  .content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    flex-grow: 1; /* Empuja el footer hacia abajo */
+  }
+
+  /* Lista de contactos */
+  .contact-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+
+  .contact-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .contact-name {
+    font-size: 1.8rem;
+    font-weight: 400;
+    margin: 0;
+  }
+
+  .contact-role {
+    font-size: 0.95rem;
+    color: white;
+    opacity: 0.9;
+    margin: 0;
+  }
+
+  .contact-email {
+    font-size: 0.85rem;
+    color: white;
+    text-decoration: none;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-top: 0.5rem;
+    transition: opacity 0.3s ease;
+  }
+
+  .contact-email:hover {
+    opacity: 0.7;
+  }
+
+  /* Mapa */
+  .map-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  .map-illustration {
+    width: 100%;
+    max-width: 450px;
+    height: auto;
+    object-fit: contain;
+  }
+
+  /* Footer Redes Sociales */
+  .socials-footer {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-top: 4rem;
+    padding-top: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .social-item {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .social-label {
+    font-size: 0.9rem;
+    color: white;
+    opacity: 0.9;
+  }
+
+  .social-link {
+    font-size: 0.9rem;
+    color: white;
+    text-decoration: none;
+    font-weight: 700;
+    letter-spacing: 1px;
+    transition: opacity 0.3s ease;
+  }
+
+  .social-link:hover {
+    opacity: 0.7;
+  }
+
+  /* --- RESPONSIVO --- */
+  @media (max-width: 1200px) {
+    .content-pane { padding: 8rem 3rem 3rem 4rem; }
+    .page-title { font-size: 4.5rem; }
+  }
+
+  @media (max-width: 1024px) {
+    .page-contacto { height: auto; overflow: auto; }
+    .split-layout { flex-direction: column; }
+    .media-pane { width: 100%; height: 50vh; }
+    .content-pane { width: 100%; padding: 4rem 3rem; }
+  }
+
+  @media (max-width: 768px) {
+    .content-pane { padding: 3rem 24px; }
+    .page-title { font-size: 3.5rem; }
+    .content-grid { grid-template-columns: 1fr; gap: 4rem; }
+    .map-container { order: -1; } /* Sube el mapa arriba de los contactos en móviles */
+    .socials-footer { flex-direction: column; align-items: flex-start; gap: 1rem; }
+  }
+</style>

@@ -1,0 +1,272 @@
+---
+// src/pages/[lang]/studio/cine-y-tv.astro
+import Layout from '../../../layouts/Layout.astro';
+import Header from '../../../components/Header.astro';
+import MenuOverlay from '../../../components/MenuOverlay.astro';
+import { sanityClient } from '../../../lib/sanity';
+
+export function getStaticPaths() {
+  return [
+    { params: { lang: 'es' } },
+    { params: { lang: 'en' } },
+  ];
+}
+
+const { lang } = Astro.params;
+
+// 1. Consulta GROQ para extraer todos los campos del esquema
+const query = `*[_type == "pageStudioCineTv"][0]{
+  pageTitle,
+  mainTitle,
+  subtitle,
+  paragraph,
+  desarrolloCards[]{ title, paragraph, "imageUrl": image.asset->url },
+  produccionCards[]{ title, paragraph, "imageUrl": image.asset->url },
+  distribucionCards[]{ title, paragraph, "imageUrl": image.asset->url }
+}`;
+
+const pageData = await sanityClient.fetch(query);
+
+// 2. Función cazadora bilingüe
+const getText = (field) => {
+  if (!field) return '';
+  if (typeof field === 'string') return field;
+  if (lang === 'en' && field.en) return field.en;
+  if (field.es) return field.es;
+  return '';
+};
+
+// Textos del Menú Principal
+const tabCine = lang === 'en' ? 'FILM & TV' : 'CINE Y TV';
+const tabVerticales = lang === 'en' ? 'VERTICALS' : 'VERTICALES';
+const tabIA = lang === 'en' ? 'ARTIFICIAL INTELLIGENCE' : 'INTELIGENCIA ARTIFICIAL';
+
+// Filtros Secundarios
+const filterDesarrollo = lang === 'en' ? 'DEVELOPMENT' : 'DESARROLLO';
+const filterProduccion = lang === 'en' ? 'PRODUCTION' : 'PRODUCCIÓN';
+const filterDistribucion = lang === 'en' ? 'DISTRIBUTION' : 'DISTRIBUCIÓN';
+
+// 3. Textos Principales de la Página
+const title = getText(pageData?.pageTitle) || 'Studio';
+const mainTitle = getText(pageData?.mainTitle) || 'Cine y Tv';
+const subtitle = getText(pageData?.subtitle) || '';
+const mainParagraph = getText(pageData?.paragraph) || '';
+
+// 4. Unificación de las Tarjetas
+// Mapeamos cada arreglo para inyectarle su categoría correspondiente
+const desarrollo = (pageData?.desarrolloCards || []).map(card => ({
+  ...card,
+  category: 'desarrollo'
+}));
+
+const produccion = (pageData?.produccionCards || []).map(card => ({
+  ...card,
+  category: 'produccion'
+}));
+
+const distribucion = (pageData?.distribucionCards || []).map(card => ({
+  ...card,
+  category: 'distribucion'
+}));
+
+// Juntamos todas las tarjetas en un solo arreglo
+const allCards = [...desarrollo, ...produccion, ...distribucion];
+---
+
+<Layout>
+  <Header />
+  <MenuOverlay />
+
+  <main class="page-studio">
+    <div class="content-wrapper">
+      
+      <h1 class="page-title">{title}</h1>
+      
+      <div class="primary-filters">
+        <a href={`/${lang}/studio/cine-y-tv`} class="filter-btn active">{tabCine}</a>
+        <a href={`/${lang}/studio/verticales`} class="filter-btn">{tabVerticales}</a>
+        <a href={`/${lang}/studio/ia`} class="filter-btn">{tabIA}</a>
+      </div>
+
+      <div class="intro-section">
+        <h2 class="section-subtitle">{mainTitle}</h2>
+        {subtitle && <p class="highlight-text">{subtitle}</p>}
+        <div class="paragraphs">
+          <!-- Renderizamos el texto. Si usas saltos de línea, aplicamos CSS white-space: pre-wrap -->
+          <p class="main-desc">{mainParagraph}</p>
+        </div>
+      </div>
+
+      <div class="secondary-filters-container">
+        <div class="secondary-filters" id="slider-filters">
+          <button class="sub-filter-btn active" data-filter="desarrollo">{filterDesarrollo}</button>
+          <button class="sub-filter-btn" data-filter="produccion">{filterProduccion}</button>
+          <button class="sub-filter-btn" data-filter="distribucion">{filterDistribucion}</button>
+        </div>
+      </div>
+
+      <div class="slider-container">
+        <div class="slider-track" id="projects-slider">
+          
+          {allCards.map((card) => (
+            <div class="studio-card" data-category={card.category}>
+              <div class="card-content">
+                <h3 class="card-title">{getText(card.title)}</h3>
+                <p class="card-desc">{getText(card.paragraph)}</p>
+              </div>
+              <div class="card-image" style={`background-image: url(${card.imageUrl || ''});`}>
+              </div>
+            </div>
+          ))}
+
+        </div>
+      </div>
+
+    </div>
+  </main>
+</Layout>
+
+<style>
+  :root {
+    --bg-dark: #112d34;
+    --card-bg: #166e7b;
+    --accent: #d86a38;
+    --text-light: #7da5af;
+  }
+
+  body { background-color: var(--bg-dark); }
+
+  .page-studio {
+    min-height: 100vh; width: 100%;
+    padding-top: 10rem; padding-bottom: 6rem;
+    color: white; overflow-x: hidden;
+  }
+
+  /* El contenedor al 100% alineado con el logo */
+  .content-wrapper {
+    width: 100%; padding: 0 4rem; box-sizing: border-box;
+  }
+
+  .page-title {
+    font-size: 5rem; font-weight: 700; margin: 0 0 2rem 0; letter-spacing: -1px;
+  }
+
+  .primary-filters { display: flex; gap: 1rem; margin-bottom: 4rem; flex-wrap: wrap; }
+  .filter-btn {
+    padding: 0.6rem 1.2rem; border-radius: 4px; font-weight: 700;
+    font-size: 0.85rem; text-decoration: none; transition: all 0.3s ease;
+  }
+  .filter-btn.active { background-color: var(--accent); color: white; }
+  .filter-btn:not(.active) { background-color: white; color: var(--accent); }
+
+  .intro-section { max-width: 900px; margin-bottom: 4rem; }
+  .section-subtitle { font-size: 2.5rem; font-weight: 400; margin: 0 0 1.5rem 0; }
+  .highlight-text { color: var(--text-light); font-weight: 700; margin-bottom: 1.5rem; font-size: 1.1rem; }
+  .main-desc { color: var(--text-light); font-size: 1rem; line-height: 1.6; white-space: pre-wrap; }
+
+  .secondary-filters-container { display: flex; justify-content: flex-end; margin-bottom: 2rem; }
+  .secondary-filters { display: flex; gap: 1rem; }
+  .sub-filter-btn {
+    background: transparent; border: 1px solid white; color: white;
+    padding: 0.6rem 1.5rem; border-radius: 4px; font-weight: 600; font-size: 0.85rem;
+    cursor: pointer; transition: all 0.3s ease; letter-spacing: 1px;
+  }
+  .sub-filter-btn.active { border-color: var(--accent); color: var(--accent); }
+  .sub-filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .slider-container { width: 100%; position: relative; }
+  .slider-track {
+    display: flex; gap: 2rem; overflow-x: auto; padding-bottom: 2rem;
+    scroll-snap-type: x mandatory; scroll-behavior: smooth;
+    scrollbar-width: thin; scrollbar-color: var(--card-bg) transparent;
+  }
+  .slider-track::-webkit-scrollbar { height: 8px; }
+  .slider-track::-webkit-scrollbar-track { background: transparent; }
+  .slider-track::-webkit-scrollbar-thumb { background-color: var(--card-bg); border-radius: 4px; }
+
+/* ... tus estilos anteriores del slider ... */
+  .slider-track::-webkit-scrollbar-thumb { background-color: var(--card-bg); border-radius: 4px; }
+
+  /* NUEVA REGLA: Alineación a la derecha para 1 o 2 cards (solo en escritorio) */
+  @media (min-width: 1025px) {
+    .slider-track.align-right {
+      justify-content: flex-end;
+    }
+  }
+
+  .studio-card {
+    flex: 0 0 auto; width: 600px; height: 350px;
+    background-color: var(--card-bg); border-radius: 12px;
+    display: flex; overflow: hidden; scroll-snap-align: start;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  
+  .studio-card.hidden { display: none; }
+
+  .card-content {
+    flex: 1; padding: 2.5rem; display: flex; flex-direction: column;
+  }
+  .card-title { font-size: 1.5rem; margin: 0 0 1rem 0; font-weight: 400; }
+  .card-desc { font-size: 0.9rem; line-height: 1.5; margin-bottom: auto; opacity: 0.9; white-space: pre-wrap; }
+
+  .card-image {
+    width: 250px; background-size: cover; background-position: center;
+  }
+
+  @media (max-width: 1024px) {
+    .studio-card { width: 85vw; flex-direction: column; height: auto; }
+    .card-image { width: 100%; height: 250px; }
+  }
+  @media (max-width: 768px) {
+    .content-wrapper { padding: 0 24px; }
+    .page-title { font-size: 3.5rem; }
+    .secondary-filters-container { justify-content: flex-start; overflow-x: auto; }
+  }
+</style>
+
+<script>
+  const initSliderFilters = () => {
+    const buttons = document.querySelectorAll('.sub-filter-btn');
+    const cards = document.querySelectorAll('.studio-card');
+    const track = document.getElementById('projects-slider'); // Seleccionamos el contenedor del slider
+
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        // 1. Gestionamos las clases activas en los botones
+        buttons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const targetCategory = btn.getAttribute('data-filter');
+        let visibleCount = 0; // Iniciamos un contador en 0
+
+        // 2. Filtramos las tarjetas y contamos cuántas quedan visibles
+        cards.forEach(card => {
+          if (card.getAttribute('data-category') === targetCategory) {
+            card.classList.remove('hidden');
+            visibleCount++; // Sumamos 1 por cada tarjeta visible
+          } else {
+            card.classList.add('hidden');
+          }
+        });
+
+        // 3. Evaluamos la cantidad para alinear a la derecha
+        // Si hay 1 o 2 tarjetas, agregamos la clase. Si hay más, la quitamos.
+        if (visibleCount > 0 && visibleCount <= 2) {
+          track.classList.add('align-right');
+        } else {
+          track.classList.remove('align-right');
+        }
+      });
+    });
+
+    // 4. Forzamos un clic inicial en el botón activo al cargar la página
+    // Esto asegura que la alineación se calcule correctamente desde el primer segundo
+    const activeBtn = document.querySelector('.sub-filter-btn.active');
+    if (activeBtn) {
+      activeBtn.click();
+    }
+  };
+
+  initSliderFilters();
+  document.addEventListener('astro:page-load', initSliderFilters);
+</script>

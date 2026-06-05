@@ -1,0 +1,426 @@
+---
+// src/pages/[lang]/servicios.astro
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import MenuOverlay from '../../components/MenuOverlay.astro';
+import { sanityClient } from '../../lib/sanity';
+
+export function getStaticPaths() {
+  return [
+    { params: { lang: 'es' } },
+    { params: { lang: 'en' } },
+  ];
+}
+
+const { lang } = Astro.params;
+
+const query = `*[_type == "pageServicios"][0]{
+  pageTitle,
+  subtitle,
+  paragraph,
+  countries[]{
+    title,
+    paragraph,
+    "imageUrl": image.asset->url
+  },
+  "clientLogos": logos[].asset->url,
+  videoSlider[]->{
+    title,
+    subtitle,
+    "directorName": director->name,
+    vimeoId
+  }
+}`;
+
+const pageData = await sanityClient.fetch(query).catch(() => null);
+
+const getText = (field) => {
+  if (!field) return '';
+  if (typeof field === 'string') return field;
+  if (lang === 'en' && field.en) return field.en;
+  if (field.es) return field.es;
+  return '';
+};
+
+// Textos principales
+const title = getText(pageData?.pageTitle) || 'Servicios de producción';
+const mainSubtitle = getText(pageData?.subtitle) || 'Producción internacional con ejecución local.';
+const mainParagraph = getText(pageData?.paragraph) || 'Ofrecemos servicios integrales de producción para publicidad, cine y televisión. Desde la preproducción hasta la postproducción, gestionamos cada etapa con estándares internacionales, precisión operativa y control creativo.\n\nCoordinamos permisos, casting, locaciones, equipos técnicos, logística internacional y postproducción, garantizando eficiencia, transparencia y calidad en cada proyecto.';
+
+// Datos Simulados (Mocks alineados al diseño de Figma)
+const countries = pageData?.countries?.length > 0 ? pageData.countries : [
+  { title: 'Perú', paragraph: 'Ofrece una diversidad geográfica extraordinaria en distancias relativamente cortas: costa, sierra, selva, desiertos y patrimonio histórico único. Contamos con equipos técnicos altamente calificados y una industria en crecimiento que combina talento y competitividad.', imageUrl: 'https://cdn-icons-png.flaticon.com/512/197/197593.png' },
+  { title: 'Colombia', paragraph: 'Se ha consolidado como uno de los hubs más atractivos de la región gracias a sus incentivos fiscales, cash rebates y crews de alto nivel técnico. Su diversidad de locaciones y estructura de producción la convierten en un territorio estratégico para proyectos internacionales.', imageUrl: 'https://cdn-icons-png.flaticon.com/512/197/197575.png' },
+  { title: 'México', paragraph: 'Cuenta con infraestructura de clase mundial, estudios consolidados, talento creativo reconocido internacionalmente y una enorme versatilidad visual. Es uno de los mercados más sólidos y competitivos de Latinoamérica.', imageUrl: 'https://cdn-icons-png.flaticon.com/512/197/197397.png' },
+  { title: 'Estados Unidos', paragraph: 'Miami funciona como puente estratégico entre Norteamérica y Latinoamérica. Ofrece acceso a talento diverso, recursos técnicos de alto estándar y una posición clave para producciones internacionales que buscan operar en el mercado estadounidense. También trabajamos a nivel nacional en EEUU.', imageUrl: 'https://cdn-icons-png.flaticon.com/512/197/197484.png' }
+];
+
+const logos = pageData?.clientLogos?.length > 0 ? pageData.clientLogos : [
+  'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Univision_logo_%282019%29.svg/512px-Univision_logo_%282019%29.svg.png',
+  'https://via.placeholder.com/200x60/ffffff/000000?text=1stAveMachine',
+  'https://via.placeholder.com/150x60/ffffff/000000?text=2b',
+  'https://via.placeholder.com/200x60/ffffff/000000?text=STORYHUNTER',
+  'https://via.placeholder.com/200x60/ffffff/000000?text=Dirty+Kitchen',
+  'https://via.placeholder.com/150x60/ffffff/000000?text=mitú'
+];
+
+const videos = pageData?.videoSlider?.length > 0 ? pageData.videoSlider : [
+  { title: 'Wong', subtitle: 'Navidad osito', directorName: 'Juan Diego Servat', vimeoId: '824804225' },
+  { title: 'Ford', subtitle: 'Escape', directorName: 'Rafa Carvalho', vimeoId: '76979871' },
+  { title: 'Falabella', subtitle: 'Me gusta como soy', directorName: 'Pancho Tuesta', vimeoId: '304207308' }
+];
+---
+
+<Layout>
+  <Header />
+  <MenuOverlay />
+
+  <main class="page-servicios">
+    
+    <section class="section-dark">
+      <div class="content-wrapper">
+        <h1 class="page-title">{title}</h1>
+
+        <div class="intro-section">
+          <h2 class="section-subtitle">{mainSubtitle}</h2>
+          <div class="paragraphs">
+            <p class="main-desc">{mainParagraph}</p>
+          </div>
+        </div>
+
+        <div class="countries-grid">
+          {countries.map(country => (
+            <div class="country-card">
+              <div class="country-img-wrapper">
+                <img src={country.imageUrl} alt={getText(country.title)} loading="lazy" />
+              </div>
+              <div class="country-info">
+                <h3 class="country-title">{getText(country.title)}</h3>
+                <p class="country-desc">{getText(country.paragraph)}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="section-logos">
+      <!-- El content-wrapper se quita aquí para que el slider toque los bordes de la pantalla -->
+      <div class="logos-slider">
+        <div class="logos-track">
+          <!-- Duplicamos el arreglo de logos [...logos, ...logos] para el bucle infinito -->
+          {[...logos, ...logos].map(logoUrl => (
+            <div class="logo-item">
+              <img src={logoUrl} alt="Cliente Quantico" loading="lazy" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="section-dark section-videos">
+      <div class="content-wrapper">
+        <div class="slider-track">
+          {videos.map(video => (
+            <button 
+              class="video-card js-open-modal" 
+              data-vimeo-id={video.vimeoId}
+              style={`background-image: url('https://vumbnail.com/${video.vimeoId}.jpg');`}
+            >
+              <div class="card-overlay">
+                <div class="card-info-left">
+                  <h3 class="card-title">{getText(video.title)}</h3>
+                  <p class="card-subtitle">{getText(video.subtitle)}</p>
+                </div>
+                <div class="card-info-right">
+                  <p class="card-director">{video.directorName}</p>
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </section>
+
+  </main>
+  
+  <div id="servicios-video-modal" class="grid-modal hidden">
+    <button id="close-servicios-modal" class="close-modal" aria-label="Cerrar">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+    <div class="modal-video-wrapper">
+      <iframe 
+        id="servicios-iframe" 
+        src="" 
+        frameborder="0" 
+        allow="autoplay; fullscreen; picture-in-picture" 
+        allowfullscreen>
+      </iframe>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  :root {
+    --bg-dark: #112d34;
+    --card-teal: #115059; /* Verde azulado para las tarjetas de países */
+    --accent: #d86a38;
+    --text-light: #7da5af;
+  }
+
+  body { background-color: var(--bg-dark); margin: 0; }
+
+  .page-servicios {
+    width: 100%;
+    color: white; overflow-x: hidden;
+  }
+
+  .content-wrapper {
+    width: 100%; padding: 0 4rem; box-sizing: border-box; max-width: 1600px; margin: 0 auto;
+  }
+
+  /* --- SECCIÓN 1: INTRO Y PAÍSES --- */
+  .section-dark {
+    background-color: var(--bg-dark);
+    padding-top: 10rem;
+    padding-bottom: 6rem;
+  }
+
+  .page-title { font-size: 5rem; font-weight: 700; margin: 0 0 2rem 0; letter-spacing: -1px; }
+
+  .intro-section { max-width: 1100px; margin-bottom: 5rem; }
+  .section-subtitle { font-size: 2rem; font-weight: 400; margin: 0 0 1.5rem 0; }
+  .main-desc { color: var(--text-light); font-size: 1rem; line-height: 1.6; white-space: pre-wrap; margin: 0; }
+
+  .countries-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+  }
+
+  .country-card {
+    background-color: var(--card-teal);
+    border-radius: 16px;
+    padding: 2.5rem;
+    display: flex;
+    gap: 2.5rem;
+    align-items: center;
+  }
+
+  .country-img-wrapper {
+    background-color: white;
+    border-radius: 12px;
+    width: 200px;
+    height: 200px;
+    flex-shrink: 0; /* Evita que el contenedor blanco se aplaste */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    box-sizing: border-box;
+  }
+
+  .country-img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Asegura que el mapa se vea completo sin recortarse */
+  }
+
+  .country-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0 0 1rem 0;
+    color: white;
+  }
+
+  .country-desc {
+    font-size: 0.95rem;
+    color: white;
+    opacity: 0.9;
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  /* --- SECCIÓN 2: LOGOS DE CLIENTES (CARRUSEL INFINITO) --- */
+  .section-logos {
+    background-color: white;
+    padding: 5rem 0;
+    width: 100%;
+    overflow: hidden; /* Evita que el carrusel ensanche la página horizontalmente */
+  }
+
+  /* Contenedor principal del carrusel */
+  .logos-slider {
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Difuminado en los bordes para una transición elegante (opcional) */
+  .logos-slider::before,
+  .logos-slider::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    width: 150px; /* Ancho de la sombra blanca */
+    height: 100%;
+    z-index: 2;
+  }
+  
+  .logos-slider::before {
+    left: 0;
+    background: linear-gradient(to right, white 0%, transparent 100%);
+  }
+  
+  .logos-slider::after {
+    right: 0;
+    background: linear-gradient(to left, white 0%, transparent 100%);
+  }
+
+  /* Pista donde corren los logos */
+  .logos-track {
+    display: flex;
+    align-items: center;
+    gap: 4rem; /* Espacio entre cada logo */
+    width: max-content; /* Permite que el contenedor crezca según el número de logos */
+    animation: scrollLogos 30s linear infinite; /* Duración de 30s, velocidad constante, repetición infinita */
+  }
+
+  /* Detiene la animación al pasar el cursor (hover) */
+  .logos-slider:hover .logos-track {
+    animation-play-state: paused; 
+  }
+
+  /* Tarjeta individual del logo */
+  .logo-item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 180px; /* Ancho fijo para mantener uniformidad en el carrusel */
+  }
+
+  .logo-item img {
+    max-height: 60px;
+    max-width: 100%;
+    object-fit: contain;
+    filter: grayscale(100%); /* Filtro blanco y negro por defecto */
+    opacity: 0.6;
+    transition: all 0.3s ease;
+  }
+
+  .logo-item img:hover {
+    filter: grayscale(0%); /* Vuelve a color original al pasar el mouse */
+    opacity: 1;
+  }
+
+  /* Animación CSS para desplazar el contenedor */
+  @keyframes scrollLogos {
+    0% { 
+      transform: translateX(0); 
+    }
+    100% { 
+      /* Se desplaza exactamente la mitad (-50%) que corresponde a la primera lista original, encajando perfecto con la lista duplicada */
+      transform: translateX(calc(-50% - 2rem)); 
+    }
+  }
+
+  /* Ajustes en pantallas más pequeñas para la sección de logos */
+  @media (max-width: 768px) {
+    .logos-slider::before,
+    .logos-slider::after {
+      width: 50px; /* Reduce el difuminado en celular */
+    }
+    .logo-item {
+      width: 120px; /* Hace los logos un poco más pequeños en celular */
+    }
+  }
+
+  /* --- SECCIÓN 3: VIDEOS --- */
+  .section-videos {
+    padding-top: 6rem;
+    padding-bottom: 8rem;
+  }
+
+  .slider-track { display: flex; gap: 2rem; overflow-x: auto; padding-bottom: 2rem; scrollbar-width: none; scroll-snap-type: x mandatory;}
+  .slider-track::-webkit-scrollbar { display: none; }
+  
+  .video-card {
+    flex: 0 0 auto; width: 600px; aspect-ratio: 16 / 9;
+    background-color: #1a3d46; background-size: cover; background-position: center;
+    border-radius: 12px; overflow: hidden; position: relative; cursor: pointer; border: none; padding: 0;
+    text-align: left; transition: transform 0.4s ease; scroll-snap-align: start;
+  }
+  .video-card:hover { transform: scale(1.02); }
+
+  .card-overlay {
+    position: absolute; bottom: 0; left: 0; width: 100%; padding: 3rem 2rem 1.5rem 2rem;
+    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%);
+    display: flex; justify-content: space-between; align-items: flex-end; box-sizing: border-box;
+  }
+
+  .card-title { font-size: 1.5rem; font-weight: 700; margin: 0; color: white; }
+  .card-subtitle, .card-director { font-size: 0.9rem; margin: 0; color: white; opacity: 0.9; }
+
+  /* --- MODAL --- */
+  .grid-modal {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background-color: rgba(0, 0, 0, 0.95); z-index: 99999;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 1; visibility: visible; transition: opacity 0.4s ease, visibility 0.4s ease;
+  }
+  .grid-modal.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+  .close-modal { position: absolute; top: 2.5rem; right: 3rem; background: none; border: none; color: #fff; cursor: pointer; z-index: 10; display: flex;}
+  .close-modal:hover { opacity: 0.6; transform: scale(1.1); }
+  .modal-video-wrapper { width: 90vw; max-width: 1400px; max-height: 85vh; aspect-ratio: 16 / 9; position: relative; }
+  .modal-video-wrapper iframe { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
+
+  /* --- RESPONSIVO --- */
+  @media (max-width: 1200px) {
+    .countries-grid { grid-template-columns: 1fr; }
+    .logos-flex { justify-content: center; }
+  }
+
+  @media (max-width: 768px) {
+    .content-wrapper { padding: 0 24px; }
+    .page-title { font-size: 3.5rem; }
+    .country-card { flex-direction: column; text-align: center; gap: 1.5rem; padding: 2rem; }
+    .video-card { width: 85vw; }
+    .modal-video-wrapper { width: 100vw; max-height: none; }
+  }
+</style>
+
+<script>
+  const initServiciosModal = () => {
+    const cards = document.querySelectorAll('.js-open-modal');
+    const modal = document.getElementById('servicios-video-modal');
+    const iframe = document.getElementById('servicios-iframe');
+    const closeBtn = document.getElementById('close-servicios-modal');
+
+    cards.forEach(card => {
+      card.addEventListener('click', (e) => {
+        e.preventDefault(); 
+        const vimeoId = card.getAttribute('data-vimeo-id');
+        
+        if (vimeoId && modal && iframe) {
+          iframe.src = `https://player.vimeo.com/video/${vimeoId}?autoplay=1&title=0&byline=0&portrait=0`;
+          modal.classList.remove('hidden');
+          document.body.style.overflow = 'hidden';
+        }
+      });
+    });
+
+    if (closeBtn && modal && iframe) {
+      closeBtn.addEventListener('click', () => {
+        modal.classList.add('hidden');
+        iframe.src = ''; 
+        document.body.style.overflow = ''; 
+      });
+    }
+  };
+
+  initServiciosModal();
+  document.addEventListener('astro:page-load', initServiciosModal);
+</script>

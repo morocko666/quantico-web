@@ -1,0 +1,73 @@
+---
+// src/pages/[lang]/index.astro
+import Layout from '../../layouts/Layout.astro';
+import VideoSlider from '../../components/VideoSlider.astro';
+import { sanityClient } from '../../lib/sanity';
+
+export function getStaticPaths() {
+  return [
+    { params: { lang: 'es' } },
+    { params: { lang: 'en' } },
+  ];
+}
+
+const { lang } = Astro.params;
+
+// 1. NUEVA CONSULTA GROQ: Buscamos la página Home y extraemos solo los videos referenciados en 'featuredVideos'
+const rawVideos = await sanityClient.fetch(`*[_type == "pageHome"][0].featuredVideos[]->{
+  title,
+  client,
+  director,
+  vimeoId,
+  hideBars
+}`) || []; // Agregamos un fallback a un arreglo vacío por si aún no hay videos publicados
+
+// Función cazadora súper robusta: recuperamos tus reglas originales y le enseñamos inglés
+const getText = (field) => {
+  if (!field) return '';
+  if (typeof field === 'string') return field;
+
+  // 1. Buscamos exhaustivamente la versión en INGLÉS
+  if (lang === 'en') {
+    if (field.en) return field.en;
+    if (field.title && field.title.en) return field.title.en;
+    if (field.name && field.name.en) return field.name.en;
+    
+    // Si el campo no tiene traducción en Sanity, intentamos devolver el string directo
+    if (field.title && typeof field.title === 'string') return field.title;
+    if (field.name && typeof field.name === 'string') return field.name;
+  }
+
+  // 2. Buscamos la versión en ESPAÑOL (o la usamos como respaldo si falla el inglés)
+  if (field.es) return field.es;
+  if (field.title && field.title.es) return field.title.es;
+  if (field.title && typeof field.title === 'string') return field.title;
+  if (field.name && field.name.es) return field.name.es;
+  if (field.name && typeof field.name === 'string') return field.name;
+
+  return '';
+};
+
+// 2. Mapeamos la data exactamente igual que antes para que tu VideoSlider ni se entere del cambio
+const projects = rawVideos.map((video) => ({
+  title: getText(video.title) || 'Sin título',
+  category: getText(video.client), 
+  director: getText(video.director),
+  vimeoId: video.vimeoId || '',
+  hideBars: video.hideBars || false 
+}));
+---
+
+<Layout>
+  <VideoSlider projects={projects} />
+</Layout>
+
+<style is:global>
+  main { 
+    height: 100vh; 
+    width: 100vw;
+    overflow: hidden; 
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+</style>

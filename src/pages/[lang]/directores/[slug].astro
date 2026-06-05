@@ -1,0 +1,124 @@
+---
+// src/pages/[lang]/directores/[slug].astro
+import Layout from '../../../layouts/Layout.astro';
+import Header from '../../../components/Header.astro';
+import MenuOverlay from '../../../components/MenuOverlay.astro';
+import ProjectGrid from '../../../components/ProjectGrid.astro'; // ¡Reutilizamos tu componente!
+import { sanityClient } from '../../../lib/sanity';
+
+// 1. ASTRO MAGIC: Generamos las rutas para cada idioma Y para cada director
+export async function getStaticPaths() {
+  // Buscamos solo los directores que tengan un slug generado
+  const directores = await sanityClient.fetch(`*[_type == "director" && defined(slug.current)]{
+    "slug": slug.current
+  }`);
+
+  const paths = [];
+  ['es', 'en'].forEach((lang) => {
+    directores.forEach((dir) => {
+      paths.push({ params: { lang, slug: dir.slug } });
+    });
+  });
+
+  return paths;
+}
+
+const { lang, slug } = Astro.params;
+
+// 2. Traemos al director específico basándonos en la URL
+const director = await sanityClient.fetch(
+  `*[_type == "director" && slug.current == $slug][0]`, 
+  { slug }
+);
+
+// 3. Traemos TODOS los proyectos y usamos la misma función cazadora
+const rawVideos = await sanityClient.fetch(`*[_type == "project"]{ ... }`);
+
+const getText = (field) => {
+  if (!field) return '';
+  if (typeof field === 'string') return field;
+  if (lang === 'en') {
+    if (field.en) return field.en;
+    if (field.title && field.title.en) return field.title.en;
+    if (field.name && field.name.en) return field.name.en;
+  }
+  if (field.es) return field.es;
+  if (field.title && field.title.es) return field.title.es;
+  if (field.name && field.name.es) return field.name.es;
+  return field.title || field.name || '';
+};
+
+// 4. Filtramos para quedarnos SOLO con los proyectos de este director
+const directorProjects = rawVideos.filter(video => {
+  const dirName = getText(video.director);
+  return dirName === director.name;
+}).map((video) => ({
+  title: getText(video.title) || 'Sin título',
+  category: getText(video.client),
+  director: director.name,
+  vimeoId: video.vimeoId || ''
+}));
+
+const labelDirector = lang === 'en' ? 'DIRECTOR' : 'DIRECTOR';
+---
+
+<Layout>
+  <Header />
+  <MenuOverlay />
+
+  <main class="page-director-detail">
+    <div class="content-wrapper">
+      
+      <span class="sys-label top-label">{labelDirector}</span>
+      <h1 class="director-title">{director.name}</h1>
+
+      <ProjectGrid projects={directorProjects} />
+      
+    </div>
+  </main>
+</Layout>
+
+<style>
+  .page-director-detail {
+    background-color: var(--bg-directores, #1a3d46);
+    min-height: 100vh;
+    width: 100%;
+    padding-top: 12rem;
+    padding-bottom: 6rem;
+  }
+
+  .content-wrapper {
+    /* Eliminamos el max-width y el margin auto */
+    width: 100%;
+    padding: 0 4rem;
+    box-sizing: border-box;
+  }
+
+  /* Etiqueta superior naranja */
+  .top-label {
+    color: var(--accent, #d86a38);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 1rem;
+    opacity: 0.9;
+  }
+
+  .director-title {
+    font-size: 6rem;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 4rem 0;
+    letter-spacing: -1px;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .page-director-detail { padding-top: 8rem; }
+    .content-wrapper { padding: 0 24px; }
+    .director-title { font-size: 3.5rem; margin-bottom: 3rem; }
+    .top-label { font-size: 0.85rem; }
+  }
+</style>

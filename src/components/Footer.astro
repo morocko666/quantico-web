@@ -1,0 +1,52 @@
+---
+// src/components/Footer.astro
+import { sanityClient } from '../lib/sanity';
+
+// Le pedimos a Sanity el documento de Configuración Global
+const config = await sanityClient.fetch(`*[_type == "globalConfig"][0]`);
+
+const socials = config?.footerSocials || [];
+const copyright = config?.footerCopyright?.es || 'QUANTICO 2026 © Todos los derechos reservados';
+---
+
+<footer class="site-footer">
+  <div class="footer-copy sys-label" style="text-transform: none; letter-spacing: 0; opacity: 0.7;">
+    {copyright}
+  </div>
+  
+  <div class="footer-socials sys-label">
+    {/* Ahora solo se renderizan los enlaces SI existen en Sanity */}
+    {socials.length > 0 && socials.map((social) => (
+      <a href={social.url} target="_blank" rel="noopener noreferrer">
+        {social.networkName}
+      </a>
+    ))}
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2rem 4rem;
+    background-color: var(--bg-menu);
+    box-sizing: border-box;
+    width: 100%;
+  }
+
+  .footer-socials {
+    display: flex;
+    gap: 2.5rem;
+  }
+
+  .footer-socials a {
+    color: var(--text);
+    text-decoration: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .footer-socials a:hover {
+    opacity: 0.7;
+  }
+</style>

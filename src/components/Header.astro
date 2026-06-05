@@ -1,0 +1,122 @@
+---
+// src/components/Header.astro
+
+// 1. Obtenemos el idioma actual desde los parámetros de Astro
+const lang = Astro.params.lang || 'es';
+const isEnglish = lang === 'en';
+
+// 2. Generamos las rutas para los botones SP | EN
+const currentPath = Astro.url.pathname;
+const pathEs = currentPath.replace(/^\/(en|es)/, '/es') || '/es/';
+const pathEn = currentPath.replace(/^\/(en|es)/, '/en') || '/en/';
+
+// 3. Generamos la ruta de inicio dinámica para el Logo
+const homeUrl = `/${lang}/`;
+---
+
+<header class="site-header">
+  <div class="logo">
+    {/* El logo ahora apunta al inicio del idioma actual */}
+    <a href={homeUrl}>
+      <img src="/logo.svg" alt="Quantico Films" class="brand-logo" />
+    </a>
+  </div>
+
+  <div class="header-controls">
+    <div class="lang-switch sys-label">
+      {/* Botones de idiomas funcionales */}
+      <a href={pathEs} class={!isEnglish ? "active" : ""}>SP</a>
+      <span class="separator">|</span>
+      <a href={pathEn} class={isEnglish ? "active" : ""}>EN</a>
+    </div>
+    <button id="menu-trigger" class="menu-btn sys-label">MENU</button>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2.5rem 4rem;
+    box-sizing: border-box;
+    z-index: 100;
+    background: transparent;
+  }
+
+  .brand-logo {
+    height: 40px;
+    width: auto;
+    display: block;
+  }
+
+  .header-controls {
+    display: flex;
+    align-items: center;
+    gap: 3rem;
+  }
+
+  .lang-switch {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  .lang-switch a {
+    color: var(--text);
+    text-decoration: none;
+    opacity: 0.5;
+    transition: opacity 0.3s ease;
+  }
+
+  .lang-switch a.active,
+  .lang-switch a:hover {
+    opacity: 1;
+  }
+  
+  /* Bloqueamos el clic en el idioma activo para evitar recargas innecesarias */
+  .lang-switch a.active {
+    pointer-events: none; 
+  }
+
+  .separator {
+    opacity: 0.3;
+    font-weight: 400;
+  }
+
+  .menu-btn {
+    background: none;
+    border: none;
+    color: var(--text);
+    cursor: pointer;
+    padding: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .menu-btn:hover {
+    opacity: 0.7;
+  }
+
+  /* =========================================
+     OPTIMIZACIÓN PARA MOBILE (SMARTPHONES)
+     ========================================= */
+  
+  @media (max-width: 768px) {
+    .site-header {
+      padding: 24px;
+    }
+
+    .lang-switch {
+      /* Ocultamos los idiomas en mobile ya que están dentro del menú desplegable */
+      display: none;
+    }
+    
+    .brand-logo {
+      height: 32px; 
+    }
+  }
+</style>

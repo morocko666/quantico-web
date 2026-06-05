@@ -1,0 +1,218 @@
+---
+// src/pages/[lang]/directores.astro
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import MenuOverlay from '../../components/MenuOverlay.astro';
+import { sanityClient } from '../../lib/sanity';
+
+export function getStaticPaths() {
+  return [
+    { params: { lang: 'es' } },
+    { params: { lang: 'en' } },
+  ];
+}
+
+const { lang } = Astro.params;
+// Etiquetas traducibles para el submenú
+const labelProyectos = lang === 'en' ? 'PROJECTS' : 'PROYECTOS';
+const labelDirectores = lang === 'en' ? 'DIRECTORS' : 'DIRECTORES';
+
+// 1. Consulta GROQ actualizada con el campo "bgImage" y "slug"
+const query = `*[_type == "pagePublicidadDirectores"][0]{
+  pageTitle,
+  directorsList[]->{
+    _id,
+    name,
+    "slug": slug.current,
+    "imageUrl": bgImage.asset->url
+  }
+}`;
+
+const pageData = await sanityClient.fetch(query);
+
+// Función para traducir el título de la página (que sí es localeString)
+const getText = (field) => {
+  if (!field) return '';
+  if (typeof field === 'string') return field;
+  if (lang === 'en') {
+    if (field.en) return field.en;
+    if (field.title && field.title.en) return field.title.en;
+  }
+  if (field.es) return field.es;
+  if (field.title && field.title.es) return field.title.es;
+  return '';
+};
+
+const title = getText(pageData?.pageTitle) || 'Directores';
+const directors = pageData?.directorsList || [];
+
+// Rutas de los botones
+const urlPublicidad = `/${lang}/publicidad`;
+const urlDirectores = `/${lang}/directores`;
+---
+
+<Layout>
+  <Header />
+  <MenuOverlay />
+  
+  <div id="directors-bg-container" class="bg-container">
+    {directors.map((director, index) => (
+      <div 
+        class="bg-layer" 
+        data-index={index}
+        style={`background-image: url(${director.imageUrl || ''});`}
+      >
+        <div class="bg-overlay"></div>
+      </div>
+    ))}
+  </div>
+
+  <main class="page-directores">
+    <div class="content-wrapper">
+      
+      <h1 class="page-title">{title}</h1>
+      
+      <div class="filters">
+        <a href={`/${lang}/publicidad`} class="filter-btn">{labelProyectos}</a>
+        <a href={`/${lang}/directores`} class="filter-btn active">{labelDirectores}</a>
+      </div>
+      
+      <nav class="directors-list">
+        {directors.map((director, index) => (
+          /* Aquí inyectamos dinámicamente el idioma y el slug en la URL */
+          <a href={`/${lang}/directores/${director.slug || ''}`} class="director-link" data-index={index}>
+            {director.name}
+          </a>
+        ))}
+      </nav>
+      
+    </div>
+  </main>
+</Layout>
+
+<style>
+  :root {
+    --bg-directores: #1a3d46;
+    --accent-color: #d86a38;
+  }
+
+  body {
+    background-color: var(--bg-directores);
+  }
+
+  /* Capas de fondo absolutas */
+  .bg-container {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    z-index: -1; 
+    pointer-events: none;
+  }
+
+  .bg-layer {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-size: cover;
+    background-position: center;
+    opacity: 0; 
+    transition: opacity 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+  }
+
+  .bg-overlay {
+    width: 100%; height: 100%;
+    background: linear-gradient(to right, rgba(11, 19, 21, 0.8) 0%, rgba(11, 19, 21, 0.4) 100%);
+  }
+
+  .page-directores {
+    min-height: 100vh;
+    width: 100%;
+    padding-top: 10rem;
+    padding-bottom: 6rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .content-wrapper {
+    /* Eliminamos el max-width y el margin auto */
+    width: 100%;
+    padding: 0 4rem;
+    box-sizing: border-box;
+  }
+
+  .page-title {
+    font-size: 5rem;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 2rem 0;
+  }
+
+  .filters {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 3.5rem;
+  }
+
+  .filter-btn {
+    padding: 0.6rem 1.2rem;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-decoration: none;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+  }
+
+  .filter-btn.active { background-color: #d86a38; color: white; }
+  .filter-btn:not(.active) { background-color: white; color: #d86a38; }
+  .filter-btn:not(.active):hover { background-color: #f0f0f0; }
+
+  .directors-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: flex-start;
+  }
+
+  .director-link {
+    font-size: 2rem;
+    font-weight: 400;
+    color: white;
+    text-decoration: none;
+    transition: all 0.4s ease;
+    position: relative;
+  }
+
+  .director-link:hover {
+    color: var(--accent-color);
+    transform: translateX(10px);
+  }
+
+  @media (max-width: 768px) {
+    .page-directores { padding-top: 8rem; }
+    .content-wrapper { padding: 0 24px; }
+    .page-title { font-size: 3.5rem; }
+    .director-link { font-size: 1.5rem; }
+  }
+</style>
+
+<script>
+  const initDirectorsHover = () => {
+    const links = document.querySelectorAll('.director-link');
+    const layers = document.querySelectorAll('.bg-layer');
+
+    links.forEach(link => {
+      link.addEventListener('mouseenter', (e) => {
+        const index = e.target.getAttribute('data-index');
+        layers.forEach(layer => layer.style.opacity = '0');
+        const targetLayer = document.querySelector(`.bg-layer[data-index="${index}"]`);
+        if (targetLayer) targetLayer.style.opacity = '1';
+      });
+
+      link.addEventListener('mouseleave', () => {
+        layers.forEach(layer => layer.style.opacity = '0');
+      });
+    });
+  };
+
+  initDirectorsHover();
+  document.addEventListener('astro:page-load', initDirectorsHover);
+</script>

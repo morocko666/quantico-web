@@ -1,0 +1,280 @@
+---
+// src/components/VideoSlider.astro
+import 'swiper/css';
+import 'swiper/css/effect-fade';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
+
+const { projects } = Astro.props;
+---
+
+<div class="swiper hero-slider">
+  <div class="swiper-wrapper">
+    {projects.map((p) => (
+      <div class="swiper-slide">
+        
+        {/* Contenedor del video de fondo */}
+        <div class={`video-container ${p.hideBars ? 'hide-cinematic-bars' : ''}`}>
+           {/* NUEVO: Agregamos &autopause=0 al final de la URL */}
+           <iframe 
+            src={`https://player.vimeo.com/video/${p.vimeoId}?background=1&autoplay=1&loop=1&byline=0&title=0&autopause=0`} 
+            frameborder="0" 
+            allow="autoplay; fullscreen; picture-in-picture" 
+            allowfullscreen>
+           </iframe>
+        </div>
+
+        <div class="video-interactive-overlay" data-vimeo-id={p.vimeoId}></div>
+
+        <div class="slide-content">
+          <h1 class="sys-h3">{p.title}</h1>
+          <p class="sys-subtitle" style="color: white;">{p.category}</p>
+          <p class="sys-body">{p.director}</p>
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <div class="slider-controls">
+    <div class="custom-fraction sys-h2"></div>
+    <div class="slider-nav">
+      <button class="btn-prev" aria-label="Video anterior">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <button class="btn-next" aria-label="Siguiente video">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="custom-play-cursor">
+  <span class="play-text">PLAY</span>
+  <svg class="play-icon" viewBox="0 0 24 24" fill="white">
+    <path d="M8 5v14l11-7z" />
+  </svg>
+</div>
+
+<div class="video-modal" id="videoModal">
+  <button class="close-modal" aria-label="Cerrar video">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+  </button>
+  <div class="modal-content">
+    <iframe id="modalIframe" src="" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+  </div>
+</div>
+
+<style>
+  .hero-slider { width: 100%; height: 100vh; }
+  .swiper-slide { position: relative; width: 100%; height: 100%; overflow: hidden; }
+  
+  .video-container {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; pointer-events: none; z-index: 1;
+  }
+  
+  .video-container iframe {
+    position: absolute; top: 50%; left: 50%; width: 100vw; height: 56.25vw; min-height: 100vh; min-width: 177.78vh; transform: translate(-50%, -50%); transition: transform 0.3s ease;
+  }
+
+  .video-container.hide-cinematic-bars iframe {
+    transform: translate(-50%, -50%) scale(1.35);
+  }
+
+  .video-interactive-overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 5;
+    cursor: none; 
+  }
+
+  .slide-content {
+    position: absolute; bottom: 4rem; left: 4rem; z-index: 10; pointer-events: none; display: flex; flex-direction: column; gap: 8px; opacity: 0; transform: translateY(30px); transition: opacity 1.2s ease, transform 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .swiper-slide-active .slide-content {
+    opacity: 1; transform: translateY(0); transition-delay: 0.5s; 
+  }
+
+  .slide-content h1, .slide-content p { margin: 0; }
+
+  .slider-controls {
+    position: absolute; bottom: 4rem; right: 4rem; z-index: 10; display: flex; flex-direction: column; align-items: flex-end; gap: 16px;
+  }
+
+  .custom-fraction { color: white; font-variant-numeric: tabular-nums; }
+  .slider-nav { display: flex; gap: 12px; }
+  .slider-nav button { background: transparent; border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 50%; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer; transition: all 0.3s ease; pointer-events: auto; }
+  .slider-nav button:hover { background: white; color: black; }
+
+  .custom-play-cursor {
+    position: fixed;
+    top: 0; left: 0;
+    width: 86px;
+    height: 86px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    /* Movemos el cursor para que el centro del círculo coincida con la punta de la flecha */
+    margin-left: -43px; 
+    margin-top: -43px;
+  }
+
+  .custom-play-cursor.visible { 
+    opacity: 1; 
+  }
+  
+  .play-text { 
+    color: white; 
+    font-weight: 700; 
+    font-size: 13px; 
+    letter-spacing: 2px;
+    margin-bottom: 2px;
+  }
+
+  .play-icon {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .video-modal {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 10000;
+    display: flex; justify-content: center; align-items: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+  .video-modal.active { opacity: 1; pointer-events: auto; }
+
+  .modal-content { width: 90%; max-width: 1200px; aspect-ratio: 16/9; }
+  .modal-content iframe { width: 100%; height: 100%; }
+
+  .close-modal {
+    position: absolute; top: 2rem; right: 2rem; background: transparent; border: none; color: white; cursor: pointer; z-index: 10001; transition: transform 0.3s ease;
+  }
+  .close-modal:hover { transform: scale(1.1); }
+
+ /* =========================================
+     OPTIMIZACIÓN PARA MOBILE (SMARTPHONES)
+     ========================================= */
+  
+  @media (max-width: 768px) {
+    .slide-content {
+      bottom: 2rem;
+      left: 1.5rem;
+      /* Restamos 160px (o más) para asegurar que haya una buena separación con los números */
+      max-width: calc(100vw - 160px);
+      right: auto; 
+    }
+
+    .slide-content h1 {
+      font-size: 2.2rem; 
+      line-height: 1.1;  
+      white-space: normal; 
+      overflow-wrap: break-word; 
+    }
+
+    .slider-controls {
+      bottom: 2rem;
+      right: 1.5rem;
+    }
+
+    /* NUEVO: Reducimos el tamaño de la tipografía de los números (contador) */
+    .slider-controls .custom-fraction {
+      font-size: 1.5rem; /* Ajusta este valor si lo quieres más grande o más pequeño */
+    }
+
+    .slider-nav button {
+      width: 40px;
+      height: 40px;
+    }
+
+    .close-modal {
+      top: 1.5rem;
+      right: 1.5rem;
+    }
+  }
+
+  /* =========================================
+     DETECCIÓN DE DISPOSITIVOS TÁCTILES
+     ========================================= */
+  
+  /* Si el dispositivo se maneja con el dedo (táctil), ocultamos el cursor "Play" */
+  @media (pointer: coarse) {
+    .custom-play-cursor {
+      display: none !important;
+    }
+    
+    /* Le damos un feedback visual normal de "botón" al usuario móvil */
+    .video-interactive-overlay {
+      cursor: pointer; 
+    }
+  }
+
+</style>
+
+<script>
+  import Swiper from 'swiper';
+  import { EffectFade, Autoplay, Navigation, Pagination } from 'swiper/modules';
+
+  const swiperInstance = new Swiper('.hero-slider', {
+    modules: [EffectFade, Autoplay, Navigation, Pagination],
+    effect: 'fade',
+    fadeEffect: { crossFade: true },
+    loop: true,
+    autoplay: { delay: 12000, disableOnInteraction: false },
+    speed: 1800,
+    navigation: { nextEl: '.btn-next', prevEl: '.btn-prev' },
+    pagination: {
+      el: '.custom-fraction',
+      type: 'fraction',
+      formatFractionCurrent: (number) => String(number).padStart(2, '0'),
+      formatFractionTotal: (number) => String(number).padStart(2, '0'),
+    }
+  });
+
+  const cursor = document.querySelector('.custom-play-cursor') as HTMLElement;
+  const overlays = document.querySelectorAll('.video-interactive-overlay');
+  const modal = document.getElementById('videoModal') as HTMLElement;
+  const modalIframe = document.getElementById('modalIframe') as HTMLIFrameElement;
+  const closeBtn = document.querySelector('.close-modal') as HTMLButtonElement;
+
+  overlays.forEach((overlay) => {
+    overlay.addEventListener('mousemove', (e: Event) => {
+      const mouseEvent = e as MouseEvent;
+      if (cursor) {
+        cursor.style.transform = `translate3d(${mouseEvent.clientX}px, ${mouseEvent.clientY}px, 0)`;
+      }
+    });
+
+    overlay.addEventListener('mouseenter', () => cursor?.classList.add('visible'));
+    overlay.addEventListener('mouseleave', () => cursor?.classList.remove('visible'));
+
+    overlay.addEventListener('click', () => {
+      const vimeoId = overlay.getAttribute('data-vimeo-id');
+      if (vimeoId && modal && modalIframe) {
+        swiperInstance.autoplay.stop();
+        // NUEVO: Agregamos &autopause=0 también aquí para mayor seguridad
+        modalIframe.src = `https://player.vimeo.com/video/${vimeoId}?autoplay=1&color=ffffff&title=0&byline=0&portrait=0&autopause=0`;
+        modal.classList.add('active');
+        cursor?.classList.remove('visible'); 
+      }
+    });
+  });
+
+  closeBtn?.addEventListener('click', () => {
+    if (modal && modalIframe) {
+      modal.classList.remove('active');
+      modalIframe.src = ''; 
+      swiperInstance.autoplay.start(); 
+    }
+  });
+</script>

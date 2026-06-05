@@ -1,0 +1,123 @@
+---
+// src/components/MenuOverlay.astro
+import { sanityClient } from '../lib/sanity';
+
+const config = await sanityClient.fetch(`*[_type == "globalConfig"][0]`);
+const socials = config?.footerSocials || [];
+
+// 1. Obtenemos el idioma desde los parámetros mágicos de Astro
+const lang = Astro.params.lang || 'es';
+const isEnglish = lang === 'en';
+
+// 2. Rutas para los botones de idiomas (SP | EN)
+const currentPath = Astro.url.pathname;
+// Reemplazamos el idioma en la URL para que el botón SP/EN nos deje en la misma página
+const pathEs = currentPath.replace(/^\/(en|es)/, '/es') || '/es/';
+const pathEn = currentPath.replace(/^\/(en|es)/, '/en') || '/en/';
+
+// 3. Función cazadora bilingüe
+const getText = (field) => {
+  if (!field) return '';
+  if (typeof field === 'string') return field;
+  return isEnglish ? (field.en || field.es) : (field.es || '');
+};
+
+// 4. Extraemos textos dinámicos
+const menuPublicidad = getText(config?.menuPublicidad) || 'Publicidad';
+const menuStudio = getText(config?.menuStudio) || 'Studio';
+const menuServicios = getText(config?.menuServicios) || 'Servicios de producción';
+const menuNosotros = getText(config?.menuNosotros) || 'Nosotros';
+const menuContacto = getText(config?.menuContacto) || 'Contacto';
+
+// 5. Generamos los enlaces agregando el idioma al inicio (/es o /en)
+const urlPublicidad = `/${lang}${config?.urlPublicidad || '/publicidad'}`;
+// Corregimos la ruta de respaldo agregando el slash de la carpeta
+const urlStudio = `/${lang}${config?.urlStudio || '/studio/cine-y-tv'}`;
+const urlServicios = `/${lang}${config?.urlServicios || '/servicios'}`;
+const urlNosotros = `/${lang}${config?.urlNosotros || '/nosotros'}`;
+const urlContacto = `/${lang}${config?.urlContacto || '/contacto'}`;
+---
+
+<div id="menu-overlay" class="menu-overlay">
+  <div class="overlay-header">
+    <div class="lang-switch sys-label">
+      <a href={pathEs} class={!isEnglish ? "active" : ""}>SP</a>
+      <span class="separator">|</span>
+      <a href={pathEn} class={isEnglish ? "active" : ""}>EN</a>
+    </div>
+    <button id="close-menu" class="close-btn sys-label">CERRAR</button>
+  </div>
+
+  <nav class="menu-nav">
+    <a href={urlPublicidad} class="sys-menu-desktop">{menuPublicidad}</a>
+    <a href={urlStudio} class="sys-menu-desktop">{menuStudio}</a>
+    <a href={urlServicios} class="sys-menu-desktop">{menuServicios}</a>
+    <a href={urlNosotros} class="sys-menu-desktop">{menuNosotros}</a>
+    <a href={urlContacto} class="sys-menu-desktop">{menuContacto}</a>
+  </nav>
+
+  <div class="overlay-socials sys-label">
+    {socials.map((social) => (
+      <a href={social.url} target="_blank" rel="noopener noreferrer">
+        {social.networkName}
+      </a>
+    ))}
+  </div>
+</div>
+
+<style>
+  .menu-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: var(--bg-menu, #0b1315); z-index: 9999;
+    padding: 2.5rem 4rem; box-sizing: border-box;
+    display: flex; flex-direction: column; justify-content: space-between;
+    transform: translateY(100%); transition: transform 0.7s cubic-bezier(0.19, 1, 0.22, 1);
+  }
+  .menu-overlay.is-active { transform: translateY(0); }
+  .overlay-header { display: flex; justify-content: flex-end; align-items: center; gap: 3rem; }
+  .close-btn { background: none; border: none; color: var(--text, #fff); cursor: pointer; font-size: 1rem; font-weight: 700; letter-spacing: 1px; font-family: var(--font-primary); transition: opacity 0.3s; }
+  .close-btn:hover { opacity: 0.7; }
+  .menu-nav { display: flex; flex-direction: column; align-items: flex-start; gap: 1.5rem; }
+  .menu-nav a { color: var(--text, #fff); text-decoration: none; transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1); display: block; transform: translateX(0); }
+  .menu-nav a:hover { color: var(--accent, #d07a3e); transform: translateX(20px); }
+  .overlay-socials { display: flex; justify-content: flex-end; gap: 2.5rem; }
+  .overlay-socials a { color: var(--text, #fff); text-decoration: none; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; transition: color 0.3s ease; }
+  .overlay-socials a:hover { color: var(--accent, #d07a3e); }
+  .lang-switch { display: flex; align-items: center; gap: 0.8rem; font-weight: 700; letter-spacing: 1px; }
+  .lang-switch a { color: var(--text, #fff); text-decoration: none; opacity: 0.5; }
+  .lang-switch a.active { opacity: 1; pointer-events: none; }
+  .separator { opacity: 0.5; color: var(--text, #fff); }
+
+  @media (max-width: 768px) {
+    .menu-overlay { padding: 24px; }
+    .overlay-header { justify-content: space-between; width: 100%; }
+    .menu-nav { gap: 1.8rem; margin-top: auto; margin-bottom: auto; }
+    .menu-nav a { font-size: 2.5rem; font-weight: 700; line-height: 1.1; white-space: normal; overflow-wrap: break-word; }
+    .overlay-socials { flex-direction: column; align-items: flex-end; gap: 1.5rem; margin-top: 2rem; }
+    .overlay-socials a { font-size: 0.9rem; }
+  }
+</style>
+
+<script>
+  // Escuchamos cualquier clic que suceda en toda la página
+  document.addEventListener('click', (event) => {
+    // 1. Buscamos el contenedor del menú
+    const menu = document.getElementById('menu-overlay');
+    
+    // Si no hay menú cargado en esta página, detenemos el script para evitar errores
+    if (!menu) return;
+
+    // 2. Verificamos si el elemento clickeado (o uno de sus padres) es el botón de ABRIR
+    // La función .closest() es clave aquí: detecta el clic incluso si tocan el texto dentro del botón
+    const clickAbrir = event.target.closest('#menu-trigger');
+    if (clickAbrir) {
+      menu.classList.add('is-active');
+    }
+
+    // 3. Verificamos si el elemento clickeado es el botón de CERRAR
+    const clickCerrar = event.target.closest('#close-menu');
+    if (clickCerrar) {
+      menu.classList.remove('is-active');
+    }
+  });
+</script>

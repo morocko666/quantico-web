@@ -1,0 +1,269 @@
+---
+// src/pages/[lang]/nosotros.astro
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import MenuOverlay from '../../components/MenuOverlay.astro';
+import { sanityClient } from '../../lib/sanity';
+
+export function getStaticPaths() {
+  return [
+    { params: { lang: 'es' } },
+    { params: { lang: 'en' } },
+  ];
+}
+
+const { lang } = Astro.params;
+
+// 1. Consulta GROQ ACTUALIZADA según la estructura de secciones de tu esquema
+const query = `*[_type == "pageNosotros"][0]{
+  pageTitle,
+  seccion1,
+  seccion2 {
+    title,
+    paragraph,
+    "imageUrl": image.asset->url
+  },
+  seccion3 {
+    title,
+    team
+  }
+}`;
+
+const pageData = await sanityClient.fetch(query);
+
+const getText = (field) => {
+  if (!field) return '';
+  if (typeof field === 'string') return field;
+  if (lang === 'en' && field.en) return field.en;
+  if (field.es) return field.es;
+  return '';
+};
+
+// 2. Extracción de datos apuntando a las nuevas rutas (seccion1, seccion2, seccion3)
+const pageTitle = getText(pageData?.pageTitle) || 'Nosotros';
+
+// Sección 1
+const introSubtitle = getText(pageData?.seccion1?.subtitle) || 'Somos un estudio estratégico de contenido.';
+const introText = getText(pageData?.seccion1?.paragraph) || 'Quantico Films es una productora internacional especializada en Publicidad, Cine y nuevas verticales narrativas. Operamos en la intersección entre creatividad, negocio y tecnología.\n\nEntendemos que hoy el contenido no solo se produce: se diseña estratégicamente. Cada proyecto que desarrollamos responde a una visión clara de posicionamiento, audiencia y proyección internacional.\n\nTrabajamos bajo tres principios fundamentales:\n• IP como activo: Creemos en la creación de propiedad intelectual sólida, escalable y exportable.\n• Ejecución de estándar global: Operamos con precisión operativa en cada territorio.\n• Innovación constante: Integramos nuevas tecnologías y formatos sin perder el foco narrativo.\n\nNo somos una productora masiva.\nSomos un estudio selectivo.\n\nElegimos proyectos donde podamos aportar valor real, elevar la propuesta creativa y construir activos sostenibles en el tiempo.';
+
+// Sección 2
+const manifestoTitle = getText(pageData?.seccion2?.title) || 'Manifiesto';
+const manifestoText = getText(pageData?.seccion2?.paragraph) || 'Creemos en las historias que viajan.\nEn las marcas que se convierten en cultura.\nEn la tecnología como aliada, no como sustituto.\nCreemos en la disciplina tanto como en la creatividad.\nEn la estrategia tanto como en la emoción.\nNo seguimos tendencias.\nLas interpretamos.\nNo ejecutamos ideas.\nConstruimos visión.\nPorque en un mundo saturado de contenido,\nsolo sobreviven las historias que están diseñadas para trascender.';
+const manifestoImageUrl = pageData?.seccion2?.imageUrl || 'https://images.unsplash.com/photo-1588693822168-35615797d19c?q=80&w=1200&auto=format&fit=crop';
+
+// Sección 3
+const teamTitle = getText(pageData?.seccion3?.title) || 'Equipo';
+const teamMembers = pageData?.seccion3?.team?.length > 0 ? pageData.seccion3.team : [
+  { name: 'Juan Pablo Ortiz', role: 'Fundador y Productor Ejecutivo Global' },
+  { name: 'Paula De la Rosa', role: 'Coordinadora de Desarrollo' },
+  { name: 'Talia Garcia-Corrochano', role: 'Productora Ejecutiva Publicidad' },
+  { name: 'Jorge Castro', role: 'Gerente Financiero' }
+];
+---
+
+<Layout>
+  <Header />
+  <MenuOverlay />
+
+  <main class="page-nosotros">
+    
+    <section class="section-intro">
+      <div class="content-wrapper">
+        <h1 class="page-title">{pageTitle}</h1>
+        <div class="intro-content">
+          <h2 class="intro-subtitle">{introSubtitle}</h2>
+          <p class="intro-desc">{introText}</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-manifesto">
+      <div class="content-wrapper">
+        <div class="manifesto-grid">
+          <div class="manifesto-text-col">
+            <h2 class="manifesto-title">{manifestoTitle}</h2>
+            <p class="manifesto-desc">{manifestoText}</p>
+          </div>
+          <div class="manifesto-img-col">
+            <img src={manifestoImageUrl} alt="Manifiesto Quantico" loading="lazy" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-team">
+      <div class="content-wrapper">
+        <h2 class="team-title">{teamTitle}</h2>
+        <div class="team-grid">
+          {teamMembers.map((member) => (
+            <div class="team-member">
+              <h3 class="member-name">{member.name}</h3>
+              <p class="member-role">{getText(member.role)}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+  </main>
+</Layout>
+
+<style>
+  :root {
+    --bg-dark: #112d34;        /* Fondo Intro */
+    --bg-light: #f4f6f6;       /* Fondo Manifiesto */
+    --bg-medium: #0c606a;      /* Fondo Equipo */
+    --text-light-blue: #7da5af; /* Textos secundarios */
+  }
+
+  body { 
+    background-color: var(--bg-dark); 
+    margin: 0;
+  }
+
+  .page-nosotros {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .content-wrapper {
+    width: 100%; 
+    padding: 0 4rem; 
+    box-sizing: border-box;
+    max-width: 1600px; /* Evita que el contenido se estire infinitamente en ultra-wide */
+    margin: 0 auto;
+  }
+
+  /* --- SECCIÓN 1: INTRODUCCIÓN --- */
+  .section-intro {
+    background-color: var(--bg-dark);
+    padding-top: 10rem;
+    padding-bottom: 6rem;
+    color: white;
+  }
+
+  .page-title {
+    font-size: 5rem; 
+    font-weight: 700; 
+    margin: 0 0 3rem 0; 
+    letter-spacing: -1px;
+  }
+
+  .intro-content {
+    max-width: 1000px;
+  }
+
+  .intro-subtitle {
+    font-size: 1.8rem;
+    font-weight: 500;
+    color: var(--bg-medium);
+    margin: 0 0 2rem 0;
+  }
+
+  .intro-desc {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: var(--text-light-blue);
+    white-space: pre-wrap; /* Respeta los saltos de línea de Sanity */
+    margin: 0;
+    opacity: 0.9;
+  }
+
+  /* --- SECCIÓN 2: MANIFIESTO --- */
+  .section-manifesto {
+    background-color: var(--bg-light);
+    color: var(--bg-dark);
+    padding: 6rem 0;
+  }
+
+  .manifesto-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr; /* Columna de imagen un poco más ancha */
+    gap: 4rem;
+    align-items: center;
+  }
+
+  .manifesto-title {
+    font-size: 2.2rem;
+    font-weight: 400;
+    margin: 0 0 2rem 0;
+  }
+
+  .manifesto-desc {
+    font-size: 1rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    margin: 0;
+    font-weight: 400;
+  }
+
+  .manifesto-img-col img {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    object-fit: cover;
+    aspect-ratio: 16 / 9;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  }
+
+  /* --- SECCIÓN 3: EQUIPO --- */
+  .section-team {
+    background-color: var(--bg-medium);
+    color: white;
+    padding: 6rem 0 8rem 0;
+  }
+
+  .team-title {
+    font-size: 2.2rem;
+    font-weight: 400;
+    margin: 0 0 3rem 0;
+  }
+
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+  }
+
+  .team-member {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .member-name {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .member-role {
+    font-size: 0.9rem;
+    margin: 0;
+    opacity: 0.8;
+    line-height: 1.4;
+  }
+
+  /* --- RESPONSIVO --- */
+  @media (max-width: 1024px) {
+    .manifesto-grid {
+      grid-template-columns: 1fr;
+      gap: 3rem;
+    }
+    .team-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 3rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .content-wrapper { padding: 0 24px; }
+    .page-title { font-size: 3.5rem; }
+    .intro-subtitle { font-size: 1.5rem; }
+    .team-grid {
+      grid-template-columns: 1fr;
+    }
+    .section-intro { padding-top: 8rem; padding-bottom: 4rem; }
+    .section-manifesto, .section-team { padding: 4rem 0; }
+  }
+</style>
