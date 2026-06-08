@@ -13,10 +13,8 @@ export function getStaticPaths() {
 
 const { lang } = Astro.params;
 
-// Consulta GROQ adaptada a tu esquema exacto
 const query = `*[_type == "pageContacto"][0]{
   pageTitle,
-  "mapImageUrl": mainImage.asset->url,
   vimeoId,
   contactList[]{
     name,
@@ -40,10 +38,9 @@ const getText = (field) => {
   return '';
 };
 
-// Extrayendo los datos de Sanity
 const title = getText(pageData?.pageTitle) || 'Contacto';
-const mapImageUrl = pageData?.mapImageUrl;
-const vimeoId = pageData?.vimeoId;
+const rawVimeoId = getText(pageData?.vimeoId);
+const vimeoId = rawVimeoId ? rawVimeoId.trim() : null;
 const contacts = pageData?.contactList || [];
 const socials = pageData?.socials || [];
 ---
@@ -56,15 +53,13 @@ const socials = pageData?.socials || [];
     <div class="split-layout">
       
       <div class="left-panel">
-        {vimeoId && (
-          <iframe
-            src={`https://player.vimeo.com/video/${vimeoId}?background=1&autoplay=1&loop=1&byline=0&title=0`}
-            frameborder="0"
-            allow="autoplay; fullscreen"
-            allowfullscreen
-            class="bg-video"
-          ></iframe>
-        )}
+        <iframe
+          src={`https://player.vimeo.com/video/${vimeoId || '76979871'}?background=1&autoplay=1&loop=1&byline=0&title=0`}
+          frameborder="0"
+          allow="autoplay; fullscreen"
+          allowfullscreen
+          class="bg-video"
+        ></iframe>
         <div class="overlay"></div>
       </div>
 
@@ -72,20 +67,14 @@ const socials = pageData?.socials || [];
         <div class="content-container">
           <h1 class="page-title">{title}</h1>
           
-          <div class="info-map-wrapper">
-            <div class="contact-list">
-              {contacts.map((contact) => (
-                <div class="contact-item">
-                  <h2 class="contact-name">{contact.name}</h2>
-                  <p class="contact-role">{getText(contact.role)}</p>
-                  <a href={`mailto:${contact.email}`} class="contact-email">{contact.email}</a>
-                </div>
-              ))}
-            </div>
-
-            <div class="map-container">
-              {mapImageUrl && <img src={mapImageUrl} alt="Mapa de operaciones" class="map-image" loading="lazy" />}
-            </div>
+          <div class="contact-list">
+            {contacts.map((contact) => (
+              <div class="contact-item">
+                <h2 class="contact-name">{contact.name}</h2>
+                <p class="contact-role">{getText(contact.role)}</p>
+                <a href={`mailto:${contact.email}`} class="contact-email">{contact.email}</a>
+              </div>
+            ))}
           </div>
 
           {socials.length > 0 && (
@@ -107,185 +96,85 @@ const socials = pageData?.socials || [];
 </Layout>
 
 <style is:global>
-  /* MAGIA: Esto oculta el componente <Footer /> de toda tu web, 
-    pero exclusivamente cuando el usuario está en esta página. 
-  */
-  footer, .site-footer {
-    display: none !important;
-  }
+  footer, .site-footer { display: none !important; }
 </style>
 
 <style>
-  :root {
-    --bg-dark: #123e48; /* El color verde azulado del diseño */
-    --text-light: #ffffff;
-  }
+  .page-contacto { width: 100vw; height: 100vh; background-color: #123e48; }
+  .split-layout { display: flex; width: 100%; height: 100%; }
 
-  body {
-    margin: 0;
-    overflow: hidden; /* Evita que la página haga scroll vertical */
-  }
+  .left-panel { flex: 1; position: relative; overflow: hidden; background-color: #000; z-index: 1; }
+  .bg-video { position: absolute; top: 50%; left: 50%; width: 150vw; height: 150vh; transform: translate(-50%, -50%); pointer-events: none; z-index: 2; }
+  .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4); z-index: 3; }
 
-  .page-contacto {
-    width: 100vw;
-    height: 100vh;
-    background-color: var(--bg-dark);
-  }
-
-  .split-layout {
-    display: flex;
-    width: 100%;
-    height: 100%;
-  }
-
-  /* --- PANEL IZQUIERDO --- */
-  .left-panel {
-    flex: 1;
-    position: relative;
-    overflow: hidden;
-    background-color: #000;
-  }
-
-  /* Truco para que el iframe de Vimeo actúe como un object-fit: cover */
-  .bg-video {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 100vw;
-    height: 100vh;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-  }
+  .right-panel { flex: 1; display: flex; align-items: center; justify-content: center; padding: 4rem; z-index: 10; }
+  .content-container { width: 100%; max-width: 750px; color: white; display: flex; flex-direction: column; justify-content: center; }
   
-  @media (min-aspect-ratio: 16/9) {
-    .bg-video { height: 300%; top: -100%; }
-  }
-  @media (max-aspect-ratio: 16/9) {
-    .bg-video { width: 300%; left: -100%; }
-  }
+  .page-title { font-size: 5rem; font-weight: 700; margin-bottom: 2rem; }
+  .contact-list { display: flex; flex-direction: column; gap: 1.5rem; }
+  .contact-name { font-size: 1.5rem; font-weight: 400; margin: 0; }
+  .contact-role { font-size: 0.95rem; margin: 0; opacity: 0.8; }
+  .contact-email { font-size: 0.85rem; font-weight: 700; color: white; text-transform: uppercase; letter-spacing: 1px; }
 
-  .overlay {
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.15); 
-  }
+  .socials-container { margin-top: 3rem; display: flex; gap: 1rem; font-size: 0.8rem; text-transform: uppercase; }
+  .social-link { color: white; font-weight: 700; }
 
-  /* --- PANEL DERECHO --- */
-  .right-panel {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 4rem;
-    box-sizing: border-box;
-  }
-
-  .content-container {
-    width: 100%;
-    max-width: 750px;
-    color: var(--text-light);
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    justify-content: center;
-  }
-
-  .page-title {
-    font-size: 5rem;
-    font-weight: 700;
-    margin: 0 0 3rem 0;
-    letter-spacing: -1px;
-  }
-
-  .info-map-wrapper {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 2rem;
-    margin-bottom: auto; /* Empuja las redes sociales hacia abajo */
-  }
-
-  .contact-list {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-  }
-
-  .contact-item {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-  }
-
-  .contact-name {
-    font-size: 1.5rem;
-    font-weight: 400;
-    margin: 0;
-  }
-
-  .contact-role {
-    font-size: 0.95rem;
-    margin: 0;
-    color: rgba(255, 255, 255, 0.8);
-  }
-
-  .contact-email {
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: var(--text-light);
-    text-decoration: none;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-top: 0.5rem;
-  }
-  
-  .contact-email:hover { opacity: 0.7; }
-
-  .map-container {
-    flex: 1;
-    max-width: 350px;
-    display: flex;
-    justify-content: flex-end;
-  }
-
-  .map-image {
-    width: 100%;
-    height: auto;
-    object-fit: contain;
-  }
-
-  /* --- REDES SOCIALES --- */
-  .socials-container {
-    margin-top: 4rem;
-    display: flex;
-    gap: 1.5rem;
-    align-items: center;
-    font-size: 0.8rem;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-  }
-
-  .social-label {
-    color: rgba(255, 255, 255, 0.8);
-  }
-
-  .social-link {
-    color: var(--text-light);
-    text-decoration: none;
-    font-weight: 700;
-  }
-
-  .social-link:hover { opacity: 0.7; }
-
-  /* --- RESPONSIVO --- */
+/* =========================================
+     OPTIMIZACIÓN PARA MOBILE (FIX)
+     ========================================= */
   @media (max-width: 1024px) {
-    .split-layout { flex-direction: column; }
-    body { overflow-y: auto; }
-    .page-contacto { height: auto; min-height: 100vh; }
-    .left-panel { min-height: 40vh; }
-    .right-panel { padding: 4rem 2rem; }
-    .info-map-wrapper { flex-direction: column-reverse; align-items: flex-start; gap: 4rem; }
-    .map-container { max-width: 80%; justify-content: flex-start; }
-    .socials-container { flex-wrap: wrap; }
+    .split-layout { 
+      display: block; 
+      position: relative;
+    }
+    
+    body { 
+      overflow-y: auto; 
+    }
+
+    /* Video de fondo absoluto */
+    .left-panel { 
+      position: fixed; /* Fijo para que siempre cubra toda la pantalla */
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      z-index: 0; /* Aseguramos que esté al fondo */
+    }
+
+    .bg-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover; /* Asegura el efecto cover real */
+    }
+
+    .overlay {
+      background: rgba(0, 0, 0, 0.6); /* Velo más oscuro para legibilidad */
+      z-index: 1;
+    }
+    
+    /* Panel de texto flotando sobre el video */
+    .right-panel { 
+      position: relative;
+      width: 100%;
+      padding: 6rem 2rem 4rem 2rem; 
+      z-index: 2; /* Siempre por encima del video */
+      background: transparent;
+    }
+
+    .content-container {
+      align-items: flex-start;
+      text-align: left;
+    }
+    
+    .page-title {
+      font-size: 3.5rem;
+      margin-bottom: 2rem;
+    }
+
+    /* Ocultamos mapa y redes */
+    .map-container, .socials-container { 
+      display: none !important; 
+    }
   }
 </style>

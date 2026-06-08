@@ -1,0 +1,108 @@
+---
+// src/components/MapaInteractivo.astro
+---
+
+<div class="mapa-wrapper">
+  <svg viewBox="0 0 400 560" fill="none" xmlns="http://www.w3.org/2000/svg">
+    
+    <slot />
+
+    <g class="pais-interactivo">
+      <circle class="area-hover" cx="120" cy="113" r="20" fill="transparent" />
+      <circle class="punto-pulso" cx="120" cy="113" r="4" fill="#D5752D" />
+      <path class="linea-trazo" d="M120 113 L234 126" stroke="#D5752D" stroke-width="2" />
+      <text class="texto-pais" x="240" y="130" fill="white" font-family="system-ui, sans-serif" font-size="12">Estados Unidos</text>
+    </g>
+
+    <g class="pais-interactivo">
+      <circle class="area-hover" cx="109" cy="203" r="20" fill="transparent" />
+      <circle class="punto-pulso" cx="109" cy="203" r="4" fill="#D5752D" />
+      <path class="linea-trazo" d="M109 203 L53 200" stroke="#D5752D" stroke-width="2" />
+      <text class="texto-pais" x="15" y="200" fill="white" font-family="system-ui, sans-serif" font-size="12" text-anchor="end">México</text>
+    </g>
+
+    <g class="pais-interactivo">
+      <circle class="area-hover" cx="228" cy="293" r="20" fill="transparent" />
+      <circle class="punto-pulso" cx="228" cy="293" r="4" fill="#D5752D" />
+      <path class="linea-trazo" d="M228 293 L287 248" stroke="#D5752D" stroke-width="2" />
+      <text class="texto-pais" x="294" y="252" fill="white" font-family="system-ui, sans-serif" font-size="12">Colombia</text>
+    </g>
+
+    <g class="pais-interactivo">
+      <circle class="area-hover" cx="214" cy="354" r="20" fill="transparent" />
+      <circle class="punto-pulso" cx="214" cy="354" r="4" fill="#D5752D" />
+      <path class="linea-trazo" d="M214 354 L190 362" stroke="#D5752D" stroke-width="2" />
+      <text class="texto-pais" x="180" y="370" fill="white" font-family="system-ui, sans-serif" font-size="12" text-anchor="end">Perú</text>
+    </g>
+
+  </svg>
+</div>
+
+<style>
+  .mapa-wrapper {
+    width: 100%;
+    max-width: 350px;
+    margin: 0 auto;
+  }
+
+  svg {
+    overflow: visible; /* Evita que las animaciones se recorten en los bordes */
+  }
+
+  /* Círculo transparente grande para facilitar poner el mouse encima */
+  .area-hover {
+    cursor: pointer;
+  }
+
+  /* --- ANIMACIÓN 1: Puntos parpadeando (Estado Base) --- */
+  .punto-pulso {
+    transform-origin: center;
+    transform-box: fill-box;
+    animation: parpadeo 1.5s infinite ease-in-out;
+  }
+
+  @keyframes parpadeo {
+    0% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.6); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.6; }
+  }
+
+  /* Ocultamos las líneas inicialmente empujando su trazo */
+  .linea-trazo {
+    stroke-dasharray: 150;
+    stroke-dashoffset: 150;
+    transition: stroke-dashoffset 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+  }
+
+  /* Ocultamos los textos inicialmente */
+  .texto-pais {
+    opacity: 0;
+    transition: all 0.4s ease-out;
+    pointer-events: none;
+  }
+  
+  /* Textos de la derecha se esconden un poco hacia la izquierda */
+  .texto-pais.derecha { transform: translateX(-15px); }
+  /* Textos de la izquierda se esconden un poco hacia la derecha */
+  .texto-pais.izquierda { transform: translateX(15px); }
+
+  /* --- ANIMACIÓN 2 y 3: Hover en los países --- */
+  
+  /* Se dibuja la línea */
+  .pais-interactivo:hover .linea-trazo {
+    stroke-dashoffset: 0;
+  }
+
+  /* Aparece el texto flotando suavemente */
+  .pais-interactivo:hover .texto-pais {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  /* El punto deja de latir y se queda expandido */
+  .pais-interactivo:hover .punto-pulso {
+    animation: none;
+    transform: scale(1.5);
+  }
+</style>

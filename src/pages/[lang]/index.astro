@@ -2,6 +2,7 @@
 // src/pages/[lang]/index.astro
 import Layout from '../../layouts/Layout.astro';
 import VideoSlider from '../../components/VideoSlider.astro';
+import PopupEstreno from '../../components/PopupEstreno.astro'; // <-- IMPORTAMOS EL POP-UP
 import { sanityClient } from '../../lib/sanity';
 
 export function getStaticPaths() {
@@ -13,16 +14,29 @@ export function getStaticPaths() {
 
 const { lang } = Astro.params;
 
-// 1. NUEVA CONSULTA GROQ: Buscamos la página Home y extraemos solo los videos referenciados en 'featuredVideos'
-const rawVideos = await sanityClient.fetch(`*[_type == "pageHome"][0].featuredVideos[]->{
-  title,
-  client,
-  director,
-  vimeoId,
-  hideBars
-}`) || []; // Agregamos un fallback a un arreglo vacío por si aún no hay videos publicados
+// 1. NUEVA CONSULTA GROQ: Ahora traemos todo el documento del Home para sacar los videos Y el pop-up
+const query = `*[_type == "pageHome"][0]{
+  featuredVideos[]->{
+    title,
+    client,
+    director,
+    vimeoId,
+    hideBars
+  },
+  showPopup,
+  "popupImageUrl": popupImage.asset->url,
+  popupLink
+}`;
 
-// Función cazadora súper robusta: recuperamos tus reglas originales y le enseñamos inglés
+const pageData = await sanityClient.fetch(query).catch(() => null);
+
+// Extraemos los videos o un arreglo vacío si no hay
+const rawVideos = pageData?.featuredVideos || [];
+
+// Extraemos las variables del pop-up
+const { showPopup, popupImageUrl, popupLink } = pageData || {};
+
+// Función cazadora súper robusta
 const getText = (field) => {
   if (!field) return '';
   if (typeof field === 'string') return field;
@@ -60,6 +74,10 @@ const projects = rawVideos.map((video) => ({
 
 <Layout>
   <VideoSlider projects={projects} />
+  
+  {showPopup && popupImageUrl && (
+    <PopupEstreno imageUrl={popupImageUrl} link={popupLink} />
+  )}
 </Layout>
 
 <style is:global>
